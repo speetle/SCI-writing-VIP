@@ -1,0 +1,25 @@
+# 数据与个人内容——不要提交
+/00_系统/_if_parts/
+/01_文献库/*/_cache/
+/01_文献库/*/_pool/
+/04_IMRAD架构库/_pmc_cache/
+/04_IMRAD架构库/_deepdive/
+**/papers_master.csv
+**/journal_metrics*.csv
+*.docx
+*.pdf
+*.log
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.idea/
+.vscode/
+
+# 临时
+/tmp/
+*.tmp
