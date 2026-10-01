@@ -68,6 +68,14 @@ def api(path, method="GET", body=None, token=None, tries=3):
             last = f"HTTP {e.code}: {e.read().decode()[:200]}"
             if e.code in (409,) and "empty" in last.lower():
                 last = "GIT_EMPTY:" + last
+            # 401 = token 无效/已撤销/过期。重试无意义（同一 token 必然再失败），
+            # 且必须早失败：否则会把大段裸 traceback 甩给用户，看不出真正原因。
+            if e.code == 401:
+                raise RuntimeError(
+                    "401 Bad credentials —— token 无效：未设、已撤销、已过期，或以错账号生成。\n"
+                    "       解决：https://github.com/settings/tokens 重新生成（scope 勾 repo），\n"
+                    "              `export GH_TOKEN=ghp_xxx` 后重跑。\n"
+                    "       注：本脚本读的只是环境变量 GH_TOKEN，不会从别处取凭据。")
             if e.code < 500:
                 raise RuntimeError(last)
         except Exception as e:
@@ -164,6 +172,15 @@ def main():
     if not token:
         sys.exit("\n🔴 无 token：Git Data API 的写端点一律 401 Requires authentication。"
                  "\n   请 `export GH_TOKEN=ghp_xxx` 后重跑；用完到 https://github.com/settings/tokens 撤销。")
+
+    # 推送前先做一次轻量校验：401 时立即退出，**不建任何 blob/tree/commit**，
+    # 避免远端留下悬空对象。实测（2026-10-01）token 在推送过程中被撤销时，
+    # 未校验版本会把 traceback 抛在最后一步 PATCH ref 上，用户看不出根因。
+    try:
+        who = api("/user", "GET", None, token)
+        print(f"[凭据] 有效 · 账号 {who.get('login')} · scope=repo")
+    except Exception as e:
+        sys.exit(f"\n🔴 凭据校验失败，已中止，未写入任何内容：\n   {e}")
 
     add_sha = {}
     for rel in to_add:
