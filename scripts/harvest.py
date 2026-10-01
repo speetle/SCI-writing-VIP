@@ -61,6 +61,29 @@ QUERY_BLOCKS = OrderedDict([
                  'OR "biomarker signature"[tiab] OR "co-expression network"[tiab] OR "pathway enrichment"[tiab] '
                  'OR "protein-protein interaction network"[tiab] OR "tumor microenvironment"[tiab] '
                  'OR "drug target prediction"[tiab] OR "virtual screening"[tiab])'),
+    # ---- 2026-10-01（先生指定「不局限生信，整个生物医药都可以」）新增 5 块 ----
+    # 背景：先生原话「写作的日常训练可以不必局限在生信领域，整个生物医药领域都可以」。
+    # 原先 B1–B5 全部是生信/组学/算法/公共数据语义 ⇒ 湿实验、药理、临床、免疫类文章
+    # **根本不进入候选池**，相关性门槛再宽松也无用。以下 5 块补齐非生信侧。
+    ("B6_药理与药物化学", '("drug repurposing"[tiab] OR "pharmacokinetic*"[tiab] OR "pharmacodynamic*"[tiab] '
+                     'OR "IC50"[tiab] OR "structure-activity relationship"[tiab] OR "drug design"[tiab] '
+                     'OR "pharmacophore"[tiab] OR "bioavailability"[tiab] OR "dose-response"[tiab] '
+                     'OR "drug safety"[tiab] OR "adverse drug"[tiab] OR "toxicity evaluation"[tiab])'),
+    ("B7_临床研究与真实世界", '("randomized controlled trial"[tiab] OR "double-blind"[tiab] OR "placebo"[tiab] '
+                     'OR "prospective cohort"[tiab] OR "retrospective cohort"[tiab] OR "case-control study"[tiab] '
+                     'OR "clinical trial"[tiab] OR "real-world data"[tiab] OR "observational study"[tiab] '
+                     'OR "diagnostic accuracy"[tiab] OR "sensitivity and specificity"[tiab])'),
+    ("B8_动物模型与疾病模型", '("mouse model"[tiab] OR "murine model"[tiab] OR "rat model"[tiab] '
+                     'OR "animal model*"[tiab] OR "xenograft"[tiab] OR "knockout mouse"[tiab] '
+                     'OR "transgenic mouse"[tiab] OR "disease model"[tiab] OR "in vivo"[tiab])'),
+    ("B9_免疫机制与炎症", '("T-cell activation"[tiab] OR "cytokine release"[tiab] OR "macrophage polarization"[tiab] '
+                     'OR "T helper cell"[tiab] OR "autoantibod*"[tiab] OR "vaccine efficacy"[tiab] '
+                     'OR "antigen presentation"[tiab] OR "inflammasome"[tiab] OR "complement activation"[tiab] '
+                     'OR "innate immune"[tiab] OR "adaptive immune"[tiab])'),
+    ("B10_分子机制与信号通路", '("signaling pathway"[tiab] OR "molecular mechanism"[tiab] '
+                      'OR "gene expression regulation"[tiab] OR "transcription factor"[tiab] '
+                      'OR "ubiquitin*"[tiab] OR "autophagy"[tiab] OR "apoptosis"[tiab] '
+                      'OR "post-translational modification"[tiab] OR "protein stability"[tiab])'),
 ])
 
 # ---------------------------------------------------------------- 标签词典
@@ -91,6 +114,31 @@ TAGS = {
     "中药/天然产物": r"traditional chinese medicine|herbal|natural product|flavonoid|polyphenol|ginsenoside|berberine|phytochem",
     "纳米/递送": r"nanoparticle|nanomedicine|drug delivery|liposome|exosome|biomaterial|hydrogel",
     "疫苗/抗体": r"vaccine|antibody|monoclonal|CAR-?T|bispecific",
+    # ---- 2026-10-01 新增 4 条：与新增检索块 B6–B10 一一对应 ----
+    # 背景：检索块只决定"候选池"，相关性门槛判的是 TAGS。
+    # 若不补这 4 条，B6–B10 找回来的药代动力学 / 临床试验 / 动物模型 / 分子机制文章
+    # **命中检索块却卡在 `if not tags` 被整批剔除**——等于新块白加。
+    # 这是与 [ERR-2026W40-40] 同型的缺陷：**检索口径与筛选口径必须成对审计**。
+    "药代/药效评价": r"pharmacokinetic|pharmacodynamic|ADMET|dose-?response|IC50|bioavailability|therapeutic (effect|efficacy)|dose-?dependen",
+    "临床研究与RCT": r"randomized controlled trial|randomi[sz]ed|double-?blind|placebo|cohort study|case-?control|clinical trial|real-?world|observational study",
+    "动物模型/在体": r"mouse model|murine|rat model|animal model|in vivo|knockout mouse|transgenic mouse|xenograft|knock-in mouse",
+    "分子机制/信号通路": r"signaling pathway|signal transduction|molecular mechanism|transcription factor|ubiquitin|autophagy|apoptosis|post-?translational|protein stability|phosphorylat",
+}
+
+# 2026-10-01 新增：**生信核心标签子集**（用于审计「池里还剩多少生信」）。
+# ⚠️ 口径踩坑（实测 3 天窗口 / target 400，三种口径差一个数量级）：
+#   (a) `mode=='纯生信' or public_data=='Y'`      → 14.8%  ← **严重低估**
+#       理由：mode 判定要求文章**一个湿实验动词都不能有**，而先生真正要仿写的
+#       「生信稿」大量是干湿结合（既用 GEO/TCGA 又写 "we cultured cells"），被判成"湿实验为主"。
+#   (b) 含边界标签的全集（+肿瘤微环境/免疫浸润、生物标志物/诊断）→ 92.6% ← **严重灌水**
+#       理由：「生物标志物/诊断」等湿实验也大面积使用，不能当作生信专属。
+#   (c) **生信核心 13 标签（本集合，已剔除 2 个边界标签）→ 82.2%** ← 采信口径
+# 故本集合**刻意排除**「肿瘤微环境/免疫浸润」「生物标志物/诊断」这两个宽标签。
+BIOINFO_TAGS = {
+    "单细胞/空转", "机器学习/深度学习", "孟德尔随机化/因果推断", "多组学整合",
+    "转录组/表达谱", "蛋白组/代谢组", "表观遗传/甲基化", "微生物组/宏基因组",
+    "网络药理学/分子对接", "GWAS/基因组变异",
+    "预后模型/风险评分", "影像组学/病理AI", "CRISPR/基因编辑",
 }
 CANCER = {
     "乳腺癌": r"breast (cancer|carcinoma)|BRCA|triple-?negative",
@@ -222,6 +270,17 @@ EXCLUDE_PT = {"Editorial", "Comment", "Published Erratum", "Retraction of Public
               "Congress", "Interview", "Personal Narrative", "Autobiography",
               "Newspaper Article", "Published Erratum", "Expression of Concern"}
 
+# ⚠️ 2026-09-28（W40 建池）新增：**预印本排除**
+# 背景：PubMed 自 2020 起收录 bioRxiv / medRxiv / Research Square 预印本，
+# 其 pubtypes 形如 `Journal Article;Preprint`——含 "Journal Article" 字样，
+# 故 **不会被 EXCLUDE_PT 拦下**，会静默进入语料。
+# 后果（W40 首次实测）：11 篇预印本对应的 3 个"期刊"（bioRxiv / medRxiv / Res Sq）
+# **不存在 JIF，也无法从 OpenAlex 取到 2yrMCC** → 池中出现 11 条 PENDING，
+# 直接违反周池硬要求「IF 分层无 UNBINNED」。
+# 处置：与 W39 口径对齐（W39 池中预印本 = 0 篇），在初筛阶段显式剔除，
+# 而且**单列剔除原因**（不并入"非研究性文献"，避免掩盖真实构成）。
+PREPRINT_PT = {"Preprint"}
+
 
 def tag_it(text):
     tl = text.lower()
@@ -308,7 +367,12 @@ def score_row(r):
     s = 0
     s += 3 * len(r["tags"])
     s += 2 * len(r["cancers"])
-    s += 4 if r["mode"] == "纯生信" else (2 if r["mode"] == "干湿结合" else 0)
+    # 2026-10-01 调整：先生要求「不局限生信，整个生物医药都可以」，
+    # 原权重 {纯生信:4, 干湿结合:2} 会让湿实验文章在 top520 里系统性靠后。
+    # 新权重：干湿结合最高（真实写作里既有数据又有结论，最利于学表述），
+    # 纯生信与湿实验为主同档（先生本人做生信，但训练不该只剩一类）。
+    # 四类占比须在 meta 的 mode_distribution 中如实上报，发现失衡即告警。
+    s += {"纯生信": 3, "干湿结合": 4, "湿实验为主": 3, "计算/未见数据来源": 1}.get(r["mode"], 0)
     s += 2 if r["has_algo"] else 0
     s += min(len(r["abstract"]) // 400, 3)
     s += {"<1": 0, "1-3": 2, "3-5": 4, "5-10": 6, ">10": 8}.get(r["if_bin"], 1)
@@ -322,6 +386,10 @@ def main():
     ap.add_argument("--end", required=True, help="YYYY/MM/DD（EDAT 止）")
     ap.add_argument("--target", type=int, default=520)
     ap.add_argument("--max-per-block", type=int, default=2500)
+    ap.add_argument("--min-bioinfo-ratio", type=float, default=0.25,
+                    help="生信基本盘保底比例（默认 0.25）：命中生信核心标签的篇数低于此比例时，"
+                         "从落选候选中按 score 补生信文章进来。放开到整个生物医药后防检索漂移；"
+                         "实测常规窗口该比例约 82%，故只在异常窗口兜底。设 0 关闭。")
     ap.add_argument("--min-abstract", type=int, default=200)
     ap.add_argument("--if-table", default="")
     ap.add_argument("--cache-dir", default="", help="元数据/摘要缓存目录（默认 <out-dir>/_cache）")
@@ -373,13 +441,21 @@ def main():
         if pts & EXCLUDE_PT:
             dropped["非研究性文献"] += 1
             continue
+        if pts & PREPRINT_PT:
+            dropped["预印本（无 JIF，非同行评审发表稿）"] += 1
+            continue
         if len(d["abstract"]) < a.min_abstract:
             dropped["摘要过短/无摘要"] += 1
             continue
         text = (s.get("title", "") + " " + d["abstract"] + " " + " ".join(d["mesh"]))
         tags, cancers, has_pub, has_wet, has_algo, mode = tag_it(text)
         if not tags:
-            dropped["无生信/组学信号"] += 1
+            # 2026-10-01 改名：原文案「无生信/组学信号」**与事实不符**——
+            # TAGS 词典早已覆盖心血管/神经/中药/纳米/疫苗等非生信领域，
+            # 真正把范围锁死在生信的是 QUERY_BLOCKS（候选池），不是这一行。
+            # 但它仍会误杀纯临床观察、纯药效学、纯生化这类"无领域标签"的生物医学文章，
+            # 故保留剔除，但**剔除原因必须如实描述**，否则复盘时会误判为"生信门槛"。
+            dropped["未识别到生物医药领域信号"] += 1
             continue
         rows.append({
             "pmid": pmid, "title": re.sub(r"<[^>]+>", "", s.get("title", "")).strip(),
@@ -413,6 +489,38 @@ def main():
     picked = rows[:a.target] if len(rows) > a.target else rows
     print(f"[精选] 候选 {len(rows)} → 入选 {len(picked)}（目标 {a.target}）")
 
+    # 2026-10-01 新增：**生信基本盘保底补齐**
+    # 背景：先生指定「不局限生信，整个生物医药都可以」⇒ 已新增 B6–B10 五块把范围放开。
+    # 实采 3 天窗口（2026/09/28–30, target 400）时，用**过窄口径**（mode=='纯生信' 或 public_data=='Y'）
+    # 曾测出生信仅 14.8%——后证明那是口径错误（干湿结合的生信稿被算成湿实验），真实占比 82.2%。
+    # 保底机制因此**只作兜底**（默认 0.25，常规窗口约 82% 几乎不触发）：
+    # 它的作用不是"强行拉高生信占比"，而是**万一某日检索漂移把生信挤干时能自动补回**，
+    # 而不是静默让先生的日课练不到生信稿。(--min-bioinfo-ratio 0 可关闭)
+    # 未入选的候选按 score 取最高的生信文章补进来——**补的是"文章"，不是"标签"**，
+    # 因此不存在"贴标签凑数"的风险；补超额的部分不裁掉其它类，只放宽入选数上限。
+    balance_report = {"补齐生信篇数": 0, "补齐前生信": 0, "配比目标": a.min_bioinfo_ratio}
+    if a.min_bioinfo_ratio > 0:
+        def _is_bioinfo(r):
+            # 判定口径 = 命中 BIOINFO_TAGS 任一**核心**标签（见集合上方注释）。
+            # 不用 mode=='纯生信'（要求零湿实验动词，会把先生主业常见的"干湿结合生信稿"
+            # 误判成湿实验，实测低估到 14.8%）；
+            # 也不用全集标签（会把湿实验的 biomarker 研究算成生信，实测灌水到 92.6%）。
+            return bool(BIOINFO_TAGS & set(r.get("tags", "").split(";")))
+
+        balance_report["补齐前生信"] = sum(1 for r in picked if _is_bioinfo(r))
+        want = int(len(picked) * a.min_bioinfo_ratio)
+        if balance_report["补齐前生信"] < want:
+            have = {r["pmid"] for r in picked}
+            need = want - balance_report["补齐前生信"]
+            cand = [r for r in rows if r["pmid"] not in have and _is_bioinfo(r)][:need]
+            picked = picked + cand
+            balance_report["补齐生信篇数"] = len(cand)
+            balance_report["补齐后生信"] = balance_report["补齐前生信"] + len(cand)
+            rows.sort(key=lambda r: (-r["score"], r["journal_iso"]))
+    print(f"[保底] 生信 {balance_report.get('补齐前生信', 0)} → "
+          f"{balance_report.get('补齐后生信', balance_report.get('补齐前生信', 0))} 篇"
+          f"（占比目标 {a.min_bioinfo_ratio:.0%}；补齐 {balance_report['补齐生信篇数']} 篇）")
+
     # --- 10. 输出 ---
     cols = ["pmid", "title", "journal_iso", "journal_full", "issn", "if_latest", "if_year_label",
             "if_bin", "pubdate", "epubdate", "doi", "pmcid", "oa", "pubtypes", "tags", "cancers",
@@ -433,6 +541,14 @@ def main():
     jc = Counter(r["journal_iso"] for r in picked)
     oa = Counter(r["oa"] for r in picked)
 
+    # 2026-10-01 新增：统计各检索块对**入选文章**的实际贡献（不是 esearch 命中数——
+    # 命中数只说明"找得到"，贡献数才说明"真的进池了"，两者可以差很远）。
+    block_contrib = {}
+    for r in picked:
+        bs = [x for x in (r.get("matched_blocks") or "").split(";") if x]
+        for b in (bs or ["<未标记所属块>"]):
+            block_contrib[b] = block_contrib.get(b, 0) + 1
+
     summary = {
         "生成日期": date.today().isoformat(),
         "检索时间窗(EDAT)": window,
@@ -446,6 +562,21 @@ def main():
         "Top主题标签": tagc.most_common(30),
         "Top疾病/癌种": canc.most_common(25),
         "Top期刊": jc.most_common(25),
+        # 2026-10-01 新增：先生要求「不局限生信」，故必须能**审计实际配比**，
+        # 否则改了检索块与权重也不知道池里到底还剩多少生信。
+        # ⚠️ 口径（实测踩坑，三种口径差一个数量级，勿改回）：
+        #   ① mode=='纯生信' or public_data=='Y'   → 14.8%（低估：干湿结合的生信稿被算成湿实验）
+        #   ② 生信核心 13 标签（BIOINFO_TAGS）     → 82.2%（**采信**）
+        #   ③ BIOINFO_TAGS + 2 个边界标签          → 92.6%（灌水：湿实验的 biomarker 研究被算生信）
+        "生信信号占比": {
+            "口径": "命中生信核心 13 标签（BIOINFO_TAGS；不含「肿瘤微环境/免疫浸润」「生物标志物/诊断」两个边界标签）",
+            "生信篇数": sum(1 for r in picked if BIOINFO_TAGS & set(r.get("tags", "").split(";"))),
+            "入选篇数": len(picked),
+            "生信占比": f"{sum(1 for r in picked if BIOINFO_TAGS & set(r.get('tags','').split(';')))/max(len(picked),1)*100:.1f}%",
+            "失衡告警": "生信占比 <25% 或 >90% 即告警（放开领域后既不把生信挤干，也不退回纯生信）",
+        },
+        "生信保底补齐": balance_report,
+        "检索块贡献(入选文章)": block_contrib,
     }
     json.dump(summary, open(os.path.join(a.out_dir, "bins_summary.json"), "w"),
               ensure_ascii=False, indent=2)

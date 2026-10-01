@@ -40,6 +40,11 @@ def read_text(p):
     if cut != -1:
         t = t[:cut]
     t = re.sub(r"^>.*$", "", t, flags=re.M)          # 引用块
+    # 占位标记 `[TO BE MEASURED]` 必须整体剔除，否则：
+    #   ① 其 "TO BE MEASURED" 会被被动式正则 `be\s+\w+(?:ed|en)` 误命中（每个占位符 +1 假阳性）；
+    #   ② 其 3 个字母词会虚增词数，使 350–500 的字数自检失真。
+    # （[ERR-2026W39-32]；与 anti_ai_check.py 的 PROTECTED 口径对齐）
+    t = re.sub(r"\[?\s*TO\s+BE\s+MEASURED\s*\]?", " ", t, flags=re.I)
     t = re.sub(r"```.*?```", "", t, flags=re.S)      # 代码块
     t = re.sub(r"^#{1,6}\s.*$", "", t, flags=re.M)   # 标题
     t = re.sub(r"^\s*\|.*$", "", t, flags=re.M)      # 表格行
@@ -108,9 +113,11 @@ LABELS = {
     "share_long_ge35": "≥35 词长句占比 %",
     "conn_per_100sent": "连接词密度 /百句",
     "conn_types": "连接词种类数",
-    "hedge_per_100sent": "模糊限制语 /百句",
+    "hedge_per_100sent": "模糊限制语 /百句（v1.0 核心口径）",
+    "hedge_per_100sent_v2": "模糊限制语 /百句（v2.0 扩展口径）",
     "booster_per_100sent": "强化词 /百句",
-    "hedge_booster_ratio": "hedge/booster 比",
+    "hedge_booster_ratio": "hedge/booster 比（v1.0）",
+    "hedge_booster_ratio_v2": "hedge/booster 比（v2.0）",
     "ttr": "TTR 词汇丰富度",
     "passive_per_100sent": "被动式 /百句",
     "first_person_per_100sent": "第一人称 /百句",

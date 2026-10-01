@@ -87,6 +87,21 @@ LOW_SPEC = {"R4", "R6"}
 SKIP_LINE = re.compile(r"^\s*(?:>|\||```|\s*[-*]\s|#)")
 PROTECTED = re.compile(r"\[TO BE MEASURED\]|\[PMID:\d+\]|GSE\d+|TCGA-[A-Z]+")
 
+# 方法学参数豁免（[ERR-2026W39-22]，D07 落地为脚本规则）
+# 下列"数字"是**方法参数**而非**结果数值**，其来源为方法本身/素材 Methods，不属"无来源量化"：
+#   ① 交叉验证折数 `10-fold` / `fivefold`；② 显著性阈值 `p < 0.05` / `p = 0.001`；
+#   ③ 样本量 `n = 103`；④ 效应量阈值 `|log2FC| > 1`；⑤ 软件版本 `v4.1.0` / `R version 4.3`；
+#   ⑥ 剂量 / 时间等实验参数（`50 mg/kg`、`6 h`、`37 °C`）。
+# ⚠️ 本豁免**只对 R12 生效**，且**须在报告中逐条列出**（避免变成"静默放过"）。
+METHOD_PARAM = re.compile(
+    r"^\s*\d+(?:\.\d+)?[\s-]?fold\s*$"
+    r"|^\s*[Pp]\s*[<>=]\s*0?\.\d+\s*$"
+    r"|^\s*n\s*=\s*\d+\s*$"
+    r"|^\s*\|\s*log2\s*FC\s*\|.*$"
+    r"|^\s*v?\d+(?:\.\d+){1,2}\s*$"
+    r"|^\s*\d+(?:\.\d+)?\s*(?:mg/kg|mg|μg|µg|ug|ng|mL|μL|uL|µL|mM|µM|uM|nM|h|hr|hrs|hours|min|days|weeks|months|°C)\s*$"
+)
+
 
 def prose_lines(text):
     """返回 (行号, 文本) —— 仅正文散文行。
@@ -111,12 +126,19 @@ def prose_lines(text):
 
 def scan(text):
     hits = []
+    method_skips = []
     covered = [[False] * len(ln) for _, ln in prose_lines(text)]
     lines = prose_lines(text)
     for idx, (no, ln) in enumerate(lines):
         for rid, name, pat, w, advice in RULES:
             for m in re.finditer(pat, ln, flags=re.I):
                 if rid == "R12" and PROTECTED.search(ln):
+                    continue
+                # R12 方法学参数豁免（[ERR-2026W39-22]）：`10-fold` / `p < 0.05` / `n = 103`
+                # / `v4.1.0` / `50 mg/kg` 等属方法参数，不计入"无来源量化"。
+                if rid == "R12" and METHOD_PARAM.match(m.group(0)):
+                    method_skips.append({"rule": rid, "line": no,
+                                         "text": m.group(0).strip()})
                     continue
                 for k in range(m.start(), min(m.end(), len(covered[idx]))):
                     covered[idx][k] = True
@@ -135,7 +157,22 @@ def scan(text):
             for m in re.finditer(pat, ln, flags=re.I):
                 hits.append({"rule": rid, "name": name, "line": no,
                              "text": m.group(0).strip(), "weight": 0.5, "advice": "§四 英文专用检查"})
-    return lines, hits
+    return lines, hits, method_skips
+
+
+def strip_appendix(text):
+    """截断附录区，避免「本稿起草说明 / 指标表」里引用的黑名单短语被计入正文。
+
+    修复依据：[ERR-2026W39-13]（机检脚本被稿件附录污染）在 `style_compare.py` 已修复，
+    但 `anti_ai_check.py` 至 D03 仍直接读整份文件 → 同一缺陷在本脚本复现
+    （D03 rev0 的 R2 命中中，2/4 处来自附录《起草说明》的自述清单）。
+    """
+    cut = text.find("<!-- APPENDIX -->")
+    if cut != -1:
+        text = text[:cut]
+    # 再去掉引用块（稿首警示/素材来源声明），避免把声明本身当作正文
+    text = re.sub(r"^>.*$", "", text, flags=re.M)
+    return text
 
 
 def main():
@@ -143,14 +180,29 @@ def main():
     ap.add_argument("--file", required=True)
     ap.add_argument("--out", default="")
     ap.add_argument("--json", default="")
+    ap.add_argument("--no-strip-appendix", action="store_true",
+                    help="不截断附录（默认截断；一般无需开启）")
     a = ap.parse_args()
 
-    text = open(a.file, encoding="utf-8").read()
-    lines, hits = scan(text)
-    nwords = len(re.findall(r"[A-Za-z][A-Za-z'\-]*", "\n".join(l for _, l in lines))) or 1
+    raw = open(a.file, encoding="utf-8").read()
+    # 稿首素材来源声明：若声明了 PMID，则 R1/R12 的量化命中降级为「已声明来源」不计分
+    # ⚠️ D07 修正：原正则 `PMID\s*\d{6,}` 无法容忍 markdown 强调标记（`PMID **42759982**`），
+    #    导致"已声明来源"被误判为"未声明"。改为允许 PMID 与数字之间出现任意非数字字符（≤6 个）。
+    head = raw[:raw.find("<!-- APPENDIX -->")] if "<!-- APPENDIX -->" in raw else raw[:1500]
+    declares_source = bool(re.search(r"PMID[^\d]{0,6}\d{6,}", head))
+    text = raw if a.no_strip_appendix else strip_appendix(raw)
+    lines, hits, method_skips = scan(text)
+    # 词数同样须剔除占位标记，否则 "TO BE MEASURED" 会被当作 3 个字母词虚增词数，
+    # 使每千词密度被稀释、350–500 的字数自检失真（[ERR-2026W39-32]，与 style_compare 对齐）。
+    prose = PROTECTED.sub(" ", "\n".join(l for _, l in lines))
+    nwords = len(re.findall(r"[A-Za-z][A-Za-z'\-]*", prose)) or 1
 
-    weighted = sum(h["weight"] for h in hits if h["rule"] not in LOW_SPEC)
+    # 降级规则：R1（无来源的量化）/ R12 属同族；本题稿首已声明素材 PMID 时不计分
+    DOWNGRADE = {"R1", "R12"} if declares_source else set()
+    weighted = sum(h["weight"] for h in hits
+                   if h["rule"] not in LOW_SPEC and h["rule"] not in DOWNGRADE)
     lowspec = sum(h["weight"] for h in hits if h["rule"] in LOW_SPEC)
+    downgraded = sum(h["weight"] for h in hits if h["rule"] in DOWNGRADE)
     density = 1000.0 * weighted / nwords          # 每千词加权命中（仅计高特异性规则）
     score = max(1, min(10, round(10 - density / 3.0)))
 
@@ -162,15 +214,28 @@ def main():
     rep.append(f"# AI 味机器检测报告\n")
     rep.append(f"- 受检文件：`{a.file}`")
     rep.append(f"- 检测脚本：`scripts/anti_ai_check.py`（配套 `references/anti-ai-checklist.md` §二/§四）")
+    rep.append(f"- 正文范围：{'整份文件' if a.no_strip_appendix else '已截断 `<!-- APPENDIX -->` 并剔除稿首引用块'}")
+    rep.append(f"- 稿首是否声明素材 PMID：{'是' if declares_source else '否'}"
+               + ("（R1/R12 命中降级为「已声明来源」，不计分，须逐值人工复核）" if declares_source else ""))
     rep.append(f"- 正文词数（散文部分）：{nwords}")
     rep.append(f"- 高特异性规则加权命中：{weighted:g}；每千词密度：{density:.2f}")
     rep.append(f"- 低特异性规则加权命中（需人工裁定，不计分）：{lowspec:g}")
+    if downgraded:
+        rep.append(f"- 降级命中（R1/R12，稿首已声明来源，不计分）：{downgraded:g}")
+    if method_skips:
+        rep.append(f"- **R12 方法学参数豁免命中（不计分，须逐条人工确认）**：{len(method_skips)} 处 —— "
+                   + "、".join(f"`{s['text']}`(L{s['line']})" for s in method_skips))
     rep.append(f"- **AI 味指数（10 分制，越高越像人写）：{score}**\n")
     rep.append("| 规则 | 名称 | 命中 | 权重/条 | 计入评分 |")
     rep.append("|---|---|---:|---:|:---:|")
     for (rid, name), hs in sorted(by_rule.items()):
-        rep.append(f"| {rid} | {name} | {len(hs)} | {hs[0]['weight']:g} | "
-                   f"{'否（低特异性）' if rid in LOW_SPEC else '是'} |")
+        if rid in LOW_SPEC:
+            mark = "否（低特异性）"
+        elif rid in DOWNGRADE:
+            mark = "否（稿首已声明来源）"
+        else:
+            mark = "是"
+        rep.append(f"| {rid} | {name} | {len(hs)} | {hs[0]['weight']:g} | {mark} |")
     if not by_rule:
         rep.append("| — | 未命中任何规则 | 0 | — | — |")
     rep.append("\n## 命中明细\n")

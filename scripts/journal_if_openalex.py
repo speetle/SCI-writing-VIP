@@ -110,8 +110,16 @@ def main():
                 w.writerow([issn, jname, h["journal_name"], round(h["value"], 3),
                             BIN(h["value"]), "OA_2yrMCC", h["api_url"], today])
 
-    covered = sum(1 for r in rows if not (r.get("if_latest") or "").strip() and
-                  (r.get("issn") or "").strip().split()[0] in hit)
+    # ⚠️ 2026-09-28 W40 修复：原写法 `(r.get("issn") or "").strip().split()[0]`
+    # 在 issn 为空字符串时抛 IndexError（`"".strip().split()` → `[]`），
+    # 使整个脚本在**写完代理指标表之后、原地补齐文献池之前**崩溃，
+    # 表现为「表已生成、池未补齐」的半成品状态。改用与 L75/L132 一致的守卫写法。
+    def _issn0(r):
+        s = (r.get("issn") or "").strip()
+        return s.split()[0] if s else ""
+
+    covered = sum(1 for r in rows if not (r.get("if_latest") or "").strip()
+                  and _issn0(r) in hit)
     print(f"[openalex] 命中期刊 {len(hit)}/{len(need)}；可补齐文献 {covered} 篇")
     print(f"  → {a.out}")
 

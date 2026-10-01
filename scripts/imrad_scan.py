@@ -171,8 +171,8 @@ def abstract_labels(ab):
 
 # ---------- 抽样 ----------
 
-def sample(rows, n, seed):
-    rnd = random.Random(seed)
+def sample(rows, n, seed, prefer_pmc=False):
+    rnd = random.Random(seed)                                 # noqa: F841
     pure = [r for r in rows if r["mode"] == "纯生信"]
     drywet = [r for r in rows if r["mode"] == "干湿结合"]
     picked, seen = [], set()
@@ -203,6 +203,11 @@ def sample(rows, n, seed):
         have = sum(1 for x in picked if x["if_bin"] == b)
         need = max(0, q - have)
         cand = sorted(by_bin.get(b, []), key=lambda x: -float(x["score"] or 0))
+        if prefer_pmc:
+            # 不改变区间配额，只改变**区间内**的取用顺序：优先有 PMCID 的记录。
+            # 副作用（须在报告中声明）：样本会向 PMC 收录的期刊/出版商倾斜，
+            # 结构统计的期刊构成将与默认抽样不同 → 跨周比较前必须确认口径。
+            cand = sorted(cand, key=lambda x: (0 if re.match(r"^PMC\d+$", (x.get("pmcid") or "").strip()) else 1))
         if not cand or need == 0:
             continue
         step = max(1, len(cand) // need)
@@ -222,11 +227,28 @@ def main():
     ap.add_argument("--seed", type=int, default=20260921)
     ap.add_argument("--cache-dir", default="")
     ap.add_argument("--sleep", type=float, default=0.5)
+    ap.add_argument("--quota", default="",
+                    help='覆盖区间配额，如 ">10=20,5-10=15,3-5=10,1-3=5"（默认 15/20/10/5）')
+    ap.add_argument("--prefer-pmc", action="store_true",
+                    help="区间内优先抽取有 PMCID 的记录（提高全文率；会改变期刊构成，跨周比较前须声明）")
     a = ap.parse_args()
+
+    if a.quota:
+        global QUOTA
+        QUOTA = {}
+        for part in a.quota.split(","):
+            k, _, v = part.partition("=")
+            k = k.strip()
+            if k and v.strip():
+                QUOTA[k] = int(v.strip())
+        print(f"[scan] 配额覆盖为 {QUOTA}", file=sys.stderr)
 
     with open(a.pool, encoding="utf-8") as f:
         rows = [r for r in csv.DictReader(f) if r.get("pmid")]
-    picked = sample(rows, a.n, a.seed)
+    picked = sample(rows, a.n, a.seed, prefer_pmc=a.prefer_pmc)
+    if a.prefer_pmc:
+        print("[scan] 已启用 --prefer-pmc：样本向 PMC 收录期刊倾斜，"
+              "跨周比较前须声明口径（不得与默认抽样基线直接比较）", file=sys.stderr)
     print(f"[scan] 抽中 {len(picked)} 篇 "
           f"(纯生信 {sum(1 for x in picked if x['mode']=='纯生信')}, "
           f"干湿结合 {sum(1 for x in picked if x['mode']=='干湿结合')})", file=sys.stderr)

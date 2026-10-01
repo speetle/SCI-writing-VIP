@@ -1,0 +1,213 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""push_skill_to_github.py — 把本地 SCI-writing-VIP 技能推到 GitHub（通道 B：Git Data API）
+
+【为什么要用这个脚本而不是 `git push`】
+WorkBuddy 沙箱代理放行 `api.github.com`、拦截/严重拖慢 `github.com`；
+且本机 `~/.gitconfig` 里那条 credential helper 指向一个**已不存在的 gh 路径**（无凭据）。
+故写操作走 Git Data API（POST /git/blobs、POST /git/trees、POST /git/commits、PATCH /git/refs），
+只读探测走 api.github.com。
+
+【权限】需要 token。三种取法任选其一：
+  1) `export GH_TOKEN=ghp_xxx`
+  2) `python3 push_skill_to_github.py --token ghp_xxx`   （会打印一次后由 shell 处理，见下方「安全」说明）
+  3) `read -rs GH_TOKEN` 后直接跑（不落历史）
+
+⚠️ 安全：token 只经环境变量传递，脚本**绝不写盘、绝不 echo**。
+   用完请到 https://github.com/settings/tokens 点 Revoke。
+
+【用法】
+  # 1) 试运行，只列出会增删哪些文件（不需要 token 也能跑，仅公开仓库可读时）
+  python3 push_skill_to_github.py --skill <本地 skill 目录> --repo speetle/SCI-writing-VIP --dry-run
+
+  # 2) 正式推送（保留历史，追加提交）
+  GH_TOKEN=ghp_xxx python3 push_skill_to_github.py \
+      --skill ~/.workbuddy/skills/SCI-writing-VIP --repo speetle/SCI-writing-VIP \
+      --msg "feat: v2.4 — 三层取材（近十年顶刊 reserve 池）+ 问题表述强度训练 + 日课静默/周报推送"
+
+  # 3) 打标签（可选）
+  GH_TOKEN=ghp_xxx GH_TAG=v2.4.0 python3 push_skill_to_github.py ... --tag
+"""
+import argparse
+import base64
+import hashlib
+import json
+import os
+import ssl
+import sys
+import time
+import urllib.error
+import urllib.request
+
+API = "https://api.github.com"
+CTX = ssl.create_default_context()
+CTX.check_hostname = False
+CTX.verify_mode = ssl.CERT_NONE
+UA = {"User-Agent": "SCI-writing-VIP-pusher", "Accept": "application/vnd.github+json"}
+SKIP_DIRS = {".git", "__pycache__", "_cache", "dist", ".venv", "node_modules"}
+SKIP_SUFFIX = (".pyc", ".pyo", ".tmp", ".log")
+# 🔴 仓库自有文件：本地 skill 目录不收，但**绝不可判为"待删"**（删了不可逆）
+PROTECT = ("README", "CHANGELOG", "LICENSE", "docs/", ".gitignore")
+
+
+def api(path, method="GET", body=None, token=None, tries=3):
+    data = json.dumps(body).encode() if body is not None else None
+    h = dict(UA)
+    if token:
+        h["Authorization"] = f"Bearer {token}"
+    if data:
+        h["Content-Type"] = "application/json"
+    last = None
+    for i in range(tries):
+        try:
+            req = urllib.request.Request(API + path, data=data, headers=h, method=method)
+            with urllib.request.urlopen(req, timeout=45, context=CTX) as r:
+                txt = r.read().decode()
+                return json.loads(txt) if txt else {}
+        except urllib.error.HTTPError as e:
+            last = f"HTTP {e.code}: {e.read().decode()[:200]}"
+            if e.code in (409,) and "empty" in last.lower():
+                last = "GIT_EMPTY:" + last
+            if e.code < 500:
+                raise RuntimeError(last)
+        except Exception as e:
+            last = f"{type(e).__name__}: {e}"
+        time.sleep(1.2 * (i + 1))
+    raise RuntimeError(last)
+
+
+def blob_sha(data: bytes) -> str:
+    """git blob sha：sha1(b"blob <len>\\0" + data)"""
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def walk_local(root):
+    out = {}
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+        for fn in filenames:
+            if fn.endswith(SKIP_SUFFIX) or fn.startswith("."):
+                continue
+            p = os.path.join(dirpath, fn)
+            rel = os.path.relpath(p, root).replace(os.sep, "/")
+            with open(p, "rb") as f:
+                out[rel] = f.read()
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--skill", default=os.path.expanduser("~/.workbuddy/skills/SCI-writing-VIP"),
+                    help="本地 skill 目录")
+    ap.add_argument("--repo", default="speetle/SCI-writing-VIP")
+    ap.add_argument("--branch", default="main")
+    ap.add_argument("--msg", default="chore: sync local skill")
+    ap.add_argument("--token", default="", help="（可选）也可直接用环境变量 GH_TOKEN")
+    ap.add_argument("--dry-run", action="store_true", help="只比对本地/远端差异，不推送")
+    ap.add_argument("--tag", default="", help="推送后打标签（需 token）")
+    ap.add_argument("--prune", action="store_true",
+                    help="删除远端有本地无的文件（**默认不开**）。"
+                         "⚠️ 2026-10-01 实测：远端有 README/CHANGELOG/LICENSE/.gitignore/docs/PUBLISH.md/"
+                         "references/templates/* 共 13 份，本地 skill 目录无对应文件——"
+                         "**开着 --prune 会把它们删掉且不可逆**，故默认只报告不删。")
+    a = ap.parse_args()
+
+    token = a.token or os.environ.get("GH_TOKEN", "")
+    root = os.path.abspath(os.path.expanduser(a.skill))
+    if not os.path.isdir(root):
+        sys.exit(f"本地 skill 目录不存在：{root}")
+
+    local = walk_local(root)
+    print(f"[本地] skill 目录 {root}\n[本地] 待推文件 {len(local)} 个")
+    for p in sorted(local)[:5]:
+        print(f"      {p}")
+    if len(local) > 5:
+        print(f"      ...（共 {len(local)} 个）")
+
+    head = api(f"/repos/{a.repo}/commits/{a.branch}")
+    head_sha = head.get("sha") or (head.get("commit") or {}).get("sha")
+    if not head_sha:
+        sys.exit(f"读不到远端 HEAD：{head}")
+    print(f"[远端] {a.repo}@{a.branch} HEAD={head_sha[:10]}")
+
+    tree = api(f"/repos/{a.repo}/git/trees/{head_sha}?recursive=1")
+    remote = {i["path"]: i["sha"] for i in tree.get("tree", []) if i.get("type") == "blob"}
+
+    to_add, changed = [], []
+    for rel, data in local.items():
+        if rel not in remote:
+            to_add.append(rel)
+        elif remote[rel] != blob_sha(data):
+            changed.append(rel)
+            to_add.append(rel)
+    def protected(p):
+        return any(p.startswith(x) or os.path.basename(p).startswith(x) for x in PROTECT)
+
+    stale = [p for p in remote if p not in local]
+    protected_stale = [p for p in stale if protected(p)]
+    stale = [p for p in stale if not protected(p)]
+
+    print(f"\n[比对] 新增 {len(to_add) - len(changed)}｜修改 {len(changed)}｜"
+          f"远端有本地无（删除）{len(stale)}｜无变化 {len(local) - len(to_add)}")
+    for p in sorted(changed)[:20]:
+        print(f"      M {p}")
+    for p in sorted(p for p in to_add if p not in changed)[:20]:
+        print(f"      A {p}")
+    for p in sorted(stale)[:20]:
+        print(f"      D {p}")
+    if protected_stale:
+        print(f"      🔒 受保护（只读报告、不删）：{protected_stale}")
+
+    if a.dry_run:
+        print("\n[dry-run] 完成，未推送（也不建 blob，省 API 配额）。")
+        return
+    if not token:
+        sys.exit("\n🔴 无 token：Git Data API 的写端点一律 401 Requires authentication。"
+                 "\n   请 `export GH_TOKEN=ghp_xxx` 后重跑；用完到 https://github.com/settings/tokens 撤销。")
+
+    add_sha = {}
+    for rel in to_add:
+        nb = api(f"/repos/{a.repo}/git/blobs", "POST",
+                 {"content": base64.b64encode(local[rel]).decode(), "encoding": "base64"}, token)
+        add_sha[rel] = nb["sha"]
+
+    entries = [{"path": p, "mode": "100644", "type": "blob", "sha": add_sha[p]} for p in to_add]
+    if a.prune:
+        entries += [{"path": p, "sha": None} for p in stale]
+        print(f"[剪枝] 已开启 --prune，将删除远端 {len(stale)} 个文件：{stale}")
+    elif stale:
+        print(f"[⚠️ 保留] 远端有本地无的 {len(stale)} 个文件**未删除**（未传 --prune）：{stale}")
+    base = tree.get("sha")
+    new_tree = api(f"/repos/{a.repo}/git/trees", "POST",
+                   {"base_tree": base, "tree": entries}, token)
+
+    parents = [head_sha]
+    if len(parents) == 1 and new_tree.get("parents"):
+        pass
+    commit = api(f"/repos/{a.repo}/git/commits", "POST",
+                 {"message": a.msg, "tree": new_tree["sha"], "parents": parents}, token)
+    api(f"/repos/{a.repo}/git/refs/heads/{a.branch}", "PATCH",
+        {"sha": commit["sha"], "force": False}, token)
+
+    if a.tag:
+        try:
+            api(f"/repos/{a.repo}/git/refs/tags/{a.tag}", "POST",
+                {"ref": f"refs/tags/{a.tag}", "sha": commit["sha"]}, token)
+            print(f"[标签] {a.tag} → {commit['sha'][:10]}")
+        except RuntimeError as e:
+            print(f"[标签] 跳过（已存在或无权限）：{e}")
+
+    # 核验
+    vt = api(f"/repos/{a.repo}/git/trees/{commit['sha']}?recursive=1")
+    rt = {i["path"]: i["sha"] for i in vt.get("tree", []) if i.get("type") == "blob"}
+    bad = [p for p, d in local.items() if rt.get(p) != blob_sha(d)]
+    print(f"\n✅ 推送完成 {commit['sha'][:10]}｜远端文件 {len(rt)}｜内容不符 {len(bad)}")
+    if bad:
+        for p in bad[:10]:
+            print("   ❌", p)
+        sys.exit(1)
+    print("   逐文件 sha 比对全部一致。")
+
+
+if __name__ == "__main__":
+    main()

@@ -115,11 +115,39 @@ CONNECTIVES = [
     "accordingly", "similarly", "ultimately", "finally", "first", "second", "then",
 ]
 
+# HEDGES = v1.0「核心口径」（**保持原值不变，历史数值可复现**）
+# ⚠️ v2.0（2026-09-26，W39 D06）留痕：v1.0 词表**漏收大量情态/认知限定词**，实测低估约 42%。
+#   证据（D06 语料 795 句）：v1.0 命中 165 = 20.8/百句；漏收候选（>0 者）合计 70 = 8.81/百句；
+#   两者合并 235 = 29.6/百句。漏收高频项：can 11｜limited 11｜should 7｜unclear 7｜exploratory 7｜
+#   often 4｜cannot 3｜estimates 3｜estimated 3｜no significant 3｜did not 2｜preliminary 2。
+#   → 直接后果：D03/D04 的「hedge 密度 5.3 / 6.2 未入区间」判据建立在**低估**过的分母上；
+#     D05 声称的「rev2 实有 4 处情态、脚本只计 1 处」得到证实。
+#   处置：① 保留 v1.0（`HEDGES`）不动，供历史复现；② 新增 v2.0（`HEDGES_V2`）为**新判据口径**；
+#     ③ `style_stats` 同时输出两组值，键名后缀区分（无后缀 = v1.0 核心；`_v2` = 扩展）；
+#     ④ 依 [ERR-2026W39-26]「修复须同步同类脚本」：`style_compare.py` 直接 `from extract_language import`，
+#        本处改动自动生效，无需二次修改（已核）。
+#   立 [ERR-2026W39-35]。
 HEDGES = [
     "may", "might", "could", "suggest", "suggests", "suggested", "indicate", "indicates",
     "likely", "possibly", "potential", "potentially", "appears", "appear", "seems",
     "approximately", "relatively", "tend", "tends", "putative", "candidate", "presumably",
 ]
+
+# v2.0 扩展词表：仅收录**认知/情态限定**与**自我设限标记**，不收录纯否定结果标记
+# （`no significant` / `did not` / `failed to` 属「阴性结果表述」，单列不计入 hedge，避免混淆两类语义）。
+HEDGES_EXTRA = [
+    # 情态动词（v1.0 仅收 may/might/could，漏 can/cannot/would/should）
+    "can", "cannot", "would", "should",
+    # 认知状态词（不确定性直陈）
+    "unclear", "uncertain", "unresolved", "unknown",
+    # 估计/校准家族
+    "estimate", "estimates", "estimated", "expected", "anticipated",
+    # 频率/范围缓和词
+    "largely", "generally", "mostly", "often", "sometimes", "partly", "roughly",
+    # 自我设限标记（C-12 / C-14 家族：把效力上限写进句子）
+    "exploratory", "preliminary", "hypothesis-generating", "to our knowledge",
+]
+HEDGES_V2 = HEDGES + HEDGES_EXTRA
 
 BOOSTERS = [
     "clearly", "obviously", "undoubtedly", "certainly", "definitely", "always", "never",
@@ -168,6 +196,7 @@ def style_stats(sentences):
     low = " ".join(sentences).lower()
     conn = sum(len(re.findall(r"\b" + re.escape(c) + r"\b", low)) for c in CONNECTIVES)
     hedge = sum(len(re.findall(r"\b" + re.escape(c) + r"\b", low)) for c in HEDGES)
+    hedge2 = sum(len(re.findall(r"\b" + re.escape(c) + r"\b", low)) for c in HEDGES_V2)
     boost = sum(len(re.findall(r"\b" + re.escape(c) + r"\b", low)) for c in BOOSTERS)
     tmpl = {t: len(re.findall(re.escape(t), low)) for t in AI_TEMPLATES}
     tmpl = {k: v for k, v in tmpl.items() if v}
@@ -183,8 +212,10 @@ def style_stats(sentences):
         "conn_per_100sent": round(conn / n * 100, 1),
         "conn_types": len({c for c in CONNECTIVES if re.search(r"\b" + re.escape(c) + r"\b", low)}),
         "hedge_per_100sent": round(hedge / n * 100, 1),
+        "hedge_per_100sent_v2": round(hedge2 / n * 100, 1),
         "booster_per_100sent": round(boost / n * 100, 1),
         "hedge_booster_ratio": round(hedge / max(boost, 1), 2),
+        "hedge_booster_ratio_v2": round(hedge2 / max(boost, 1), 2),
         "ttr": round(len(set(words)) / max(len(words), 1), 3),
         "ai_template_hits": sum(tmpl.values()),
         "ai_template_detail": tmpl,
@@ -255,13 +286,32 @@ def main():
             L.append(f"- `{k}` × {v}")
         L.append("")
 
+    # ⚠️ 2026-09-28（W40 D01 建池后修复）**IF 口径标注缺失**
+    # 原写法 `IF {if_latest} ({if_bin})` **丢掉了 if_year_label / if_metric**，
+    # 而 papers.csv 中同列并存两种口径：`JIF_bioxbio`（官方 JIF）与
+    # `OA_2yrMCC`（`[代理]OpenAlex-2yrMCC`）。不标注 → 下游难以区分，
+    # 直接违反项目红线「官方 JIF 与 OpenAlex 代理值**严禁混称**」。
+    # D01 实测：75 篇中 45 篇（60%）为代理值。**改为一律显式标注**。
+    def _if_tag(r):
+        m = (r.get("if_metric") or "").strip()
+        if m == "JIF_bioxbio":
+            return "官方 JIF"
+        if m == "OA_2yrMCC":
+            return "[代理]OpenAlex-2yrMCC"
+        return f"口径未标({m or '空'})"
+
     L += ["---", "", "## 二、按修辞功能分类的真实句子（可直接引用的候选）", ""]
+    L += [
+        "> **IF 口径声明**：每行 IF 后**必附口径标签**——`官方 JIF` = bioxbio 官方期刊影响因子；"
+        "`[代理]OpenAlex-2yrMCC` = OpenAlex 两年平均被引代理值。**两者严禁混称、严禁互相换算**。",
+        "",
+    ]
     for role, items in by_role.items():
         L += [f"### {role}（命中 {len(items)} 句，展示前 {min(len(items), a.per_role)} 句）", ""]
         for s, r in items[: a.per_role]:
             L.append(
                 f"- *{s}*  \n  `PMID {r.get('pmid','')}` ｜ {(r.get('journal_iso') or '').strip()} "
-                f"｜ IF {r.get('if_latest','?')} ({r.get('if_bin','')}) ｜ {r.get('mode','')}"
+                f"｜ IF {r.get('if_latest','?')} ({r.get('if_bin','')}｜{_if_tag(r)}) ｜ {r.get('mode','')}"
             )
         if not items:
             L.append("- （当日语料未命中该角色线索，可扩大语料或补线索词）")
