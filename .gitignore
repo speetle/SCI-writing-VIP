@@ -1,25 +1,47 @@
-# 数据与个人内容——不要提交
-/00_系统/_if_parts/
-/01_文献库/*/_cache/
-/01_文献库/*/_pool/
-/04_IMRAD架构库/_pmc_cache/
-/04_IMRAD架构库/_deepdive/
-**/papers_master.csv
-**/journal_metrics*.csv
-*.docx
-*.pdf
-*.log
+# 忽略规则 —— 发布打包前必须剔除的内容
+
+# Python 缓存（绝不可进入发布包）
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+
+# 虚拟环境
+.venv/
+venv/
+env/
 
 # 系统与编辑器
 .DS_Store
 Thumbs.db
-__pycache__/
-*.py[cod]
-.venv/
-venv/
+*.swp
+*~
 .idea/
 .vscode/
 
-# 临时
-/tmp/
-*.tmp
+# 凭据与本地配置（绝不外发）
+.env
+.env.*
+*.token
+*_token*
+*secret*
+*credential*
+.netrc
+.git-credentials
+
+# 训练产出的本地数据（体积大、含个人路径，不进发布包）
+01_文献库/
+02_前沿快报/
+03_语言范式库/_archive/
+05_仿写训练/
+06_进化复盘/
+07_深度拆解/
+*.zip
+
+# 个人路径与身份信息的本地残留
+*.local
+*.bak
