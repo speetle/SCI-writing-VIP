@@ -84,7 +84,9 @@ EN_RULES = [
 # 需人工裁定，不计入分数，只在报告中列出待复核。
 LOW_SPEC = {"R4", "R6"}
 
-SKIP_LINE = re.compile(r"^\s*(?:>|\||```|\s*[-*]\s|#)")
+SKIP_LINE = re.compile(r"^\s*(?:>|\||```|\s*[-*]\s|\d+[.)]\s|#)")
+# ⚠️ `\d+[.)]\s` 为 2026-10-03 补入：此前**有序列表项**（稿首「起草前四项强制声明」的 `1. …`）
+#    未被剔除，会被当作正文计入词数与 R 类命中（[ERR-2026W40-55]，与 `style_compare.py` 同步修）。
 PROTECTED = re.compile(r"\[TO BE MEASURED\]|\[PMID:\d+\]|GSE\d+|TCGA-[A-Z]+")
 
 # 方法学参数豁免（[ERR-2026W39-22]，D07 落地为脚本规则）

@@ -2,6 +2,18 @@
 
 遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [2.5.0] — 2026-10-04
+
+### 变更（分发与权益）
+- **许可协议更换**：MIT → 自定义「保留所有权利 + 有限授权」。允许个人非商业使用与原样署名转载；**禁止商业使用、禁止移除/泛化署名、禁止重新打包发布、禁止闭源衍生**。详见新增的 `LICENSE`。
+  - ⚠️ MIT 对 **v2.0.0 及更早版本的已分发副本不可撤销**；新协议仅适用于此后发布的版本。
+- **署名嵌入三处**：`SKILL.md` 的 frontmatter（`author` / `author_orcid` / `copyright` / `license` / `first_published` / `canonical_source`）、`SKILL.md` 正文顶部署名块、`SKILL.md` 文末署名与许可节；`README.md` 顶部同步。
+- **新增 `.gitignore`**：排除 `__pycache__/`、`*.pyc`、`.DS_Store`、凭据类文件与训练产出的本地数据目录。
+- **发布前清理**：移除 `scripts/__pycache__/` 缓存（`build_skillhub_pkg.py` 本已排除，此处为源目录同步清理）。
+
+### 说明
+- 已核实：SkillHub 上 `@user_4cb21c50/sci-writing-vip`（v2.0.1）与 `dist/_skillhub/SCI-writing-VIP/`（本仓库构建产物）的 `README.md` / `LICENSE.md` / `CHANGELOG.md` 三文件 **sha256 完全一致**，系本作品自行构建发布的版本，非第三方盗用。
+
 ## [2.4.0] — 2026-10-01
 
 ### 新增

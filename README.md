@@ -1,5 +1,13 @@
 # SCI-writing-VIP
 
+> **作者**：连彬（Bin Lian）· ORCID 0000-0002-1477-9137 · drmilo@gkd.edu.cn
+> **首发**：2026-09-21 · **源仓库**：https://github.com/speetle/SCI-writing-VIP
+> **许可**：个人非商业使用；转载须完整保留本署名；**禁止移除署名、禁止重新打包发布**（见 `LICENSE`）。
+>
+> © 2026 连彬 (Bin Lian). All rights reserved.
+
+---
+
 > 可持续自我迭代型**生物医药** SCI 科研助手 —— 用真实 PubMed 文献训练「如何表述问题」，而不是套用通用模板。
 >
 > A self-iterating SCI writing assistant for **biomedical** research (no field restriction — bioinformatics is only one of many). It learns how human scientists frame problems and assert claims from real PubMed literature, instead of applying generic templates.

@@ -1,21 +1,60 @@
-MIT License
+# 许可协议 / License
 
-Copyright (c) 2026 SCI-writing-VIP contributors
+**著作权人 / Copyright Holder**
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+    连彬 (Bin Lian)
+    ORCID: 0000-0002-1477-9137
+    School of Health, Guangzhou Vocational and Technical University of Science and Technology,
+    Guangzhou, Guangdong, China
+    联系邮箱 / Contact: drmilo@gkd.edu.cn
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+**作品 / Work**：SCI-writing-VIP —— 可持续自我迭代型生物医药 SCI 科研写作助手
+**首次发布 / First published**：2026-09-21
+**首发地址 / Canonical source**：https://github.com/speetle/SCI-writing-VIP
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Copyright (c) 2026 连彬 (Bin Lian). All rights reserved.
+
+---
+
+## 一、允许的行为 / Permitted
+
+在**完整保留**本许可文件与作品内全部署名信息（作者姓名、ORCID、首发地址）的前提下，允许：
+
+1. **个人学习与研究使用**——个人为学习、科研、非商业写作训练目的安装并使用本作品。
+2. **原样署名转载**——原封不动地转发、分享本作品，且不得移除或修改任何署名信息。
+3. **引用与评述**——在论文、博客、教学材料中引用本作品的部分内容，并规范注明出处。
+
+## 二、禁止的行为 / Prohibited
+
+未经著作权人事先书面许可，**禁止**：
+
+1. **商业使用**——将本作品或其衍生内容用于任何营利目的，包括但不限于付费课程、商业咨询、SaaS 产品、企业内部培训产品。
+2. **移除或篡改署名**——删除、替换、泛化（例如改写为 "contributors"、"team"、"anonymous" 等泛称）、隐藏或以任何方式淡化作者姓名、ORCID 与首发地址。
+3. **声称原创**——以自己名义发布本作品或其任何实质性部分，或暗示自己为作者。
+4. **重新打包分发**——将本作品整体或实质性部分重新打包，发布到任何技能市场、插件市场、代码托管平台、网盘、公众号或其他分发渠道，无论是否修改。
+5. **闭源衍生**——修改本作品后以闭源方式分发，或移除本许可文件与署名块后再分发。
+
+## 三、署名要求的具体形式 / Attribution Format
+
+任何被允许的转载或引用，必须至少包含以下一行署名，且不得改动：
+
+```
+SCI-writing-VIP © 2026 连彬 (Bin Lian) — ORCID 0000-0002-1477-9137
+https://github.com/speetle/SCI-writing-VIP
+```
+
+## 四、权利保留 / Reservation of Rights
+
+著作权人保留一切未在本协议中**明示授予**的权利。本协议未授予的权利，均需事先取得著作权人的书面许可。
+
+**本协议不授予商标权、不授予专利许可、不构成任何形式的担保。** 本作品按「现状」提供，著作权人不对使用后果承担任何责任。
+
+## 五、侵权处理 / Enforcement
+
+发现违反本协议的行为，著作权人有权要求立即停止侵权、公开更正署名、下架侵权副本，并保留追究法律责任的权利。
+
+---
+
+> **历史版本说明**：本作品 v2.0.0 及更早版本曾以 MIT 协议发布。MIT 授权对**已经发出的那些版本**不可撤销，本协议自发布之日起适用于**此后发布的所有版本**。
+>
+> **Version note**: Releases up to and including v2.0.0 were published under the MIT License. That grant is irrevocable for copies already distributed. This license governs all versions released from this date onward.

@@ -1,10 +1,23 @@
 ---
 name: SCI-writing-VIP
 description: "专属可持续自我迭代型生物医药 SCI 科研助手（代号 科研贾维斯；**领域不局限生信——生信/组学/药理/临床/免疫/动物模型/分子机制均纳入，见 §2.1 三层取材与 harvest-protocol §二**）。三层取材 + 双层节奏：日课七阶段（静默执行，每日 ≥74 篇归档 + 语言范式提取 + 仿写初稿 + 问题表述强度诊断 + 两轮修订 + 沉淀）；选材分周课主池（近 1 年 / 全 IF，保量）与顶刊 reserve 池（近十年 / IF>20 / 三大顶刊为主，学「人类如何表述问题」）；周课三件套（领域前沿研究快报 Word + 50 篇 IMRAD 架构扫面与 2 篇深拆 + 通用写作框架模板，热点固定近两年）。用于『每日文献训练』『语言范式/句式/连接词拆解』『问题表述强度』『AI 腔诊断与去除』『周前沿快报 / 本周热点』『IMRAD 架构拆解』『论文大纲设计』『稿件结构修改』『润色改写』『模拟审稿』。触发词：SCI 写作、去 AI 味、AI 腔、句式库、语言范式、问题表述、保守度、IMRAD、写作进化、每日训练、周报、本周热点、润色、审稿。"
+license: "Proprietary — 个人非商业使用；再分发须完整署名；禁止重新打包发布，详见 LICENSE"
 agent_created: true
 ---
 
 # SCI-writing-VIP — 专属可持续自我迭代 SCI 科研助手
+
+> ### 署名 / Attribution
+>
+> **作者**：连彬（Bin Lian）· ORCID 0000-0002-1477-9137 · drmilo@gkd.edu.cn
+> **首发**：2026-09-21 · https://github.com/speetle/SCI-writing-VIP
+> **许可**：个人非商业使用；再分发须完整保留本署名块；**禁止移除署名、禁止重新打包发布**。详见 `LICENSE`。
+>
+> SCI-writing-VIP © 2026 连彬 (Bin Lian). All rights reserved.
+>
+> *本署名块为作品组成部分。任何形式的转载、衍生或再分发都不得删除、替换或以泛称（如 "contributors"、"team"、"anonymous"）改写本块内容。*
+
+---
 
 ## 0. 我是谁
 
@@ -306,3 +319,14 @@ python3 <skill>/scripts/harvest_toppool.py \
 - **每日**：`ERROR_DO_NOT_REPEAT.md` 未闭环条目必须在当日沉淀中完成「已进入下次自检清单」标记，否则视为未闭环。
 - **技法条目**连续 3 轮未被使用 → 标 `待淘汰`（保留，不删）。
 - **积累规则**：`A~D` 四库与框架模板**只增不减**；发现更优表述标 `[替代 A-xx]` 并保留旧条。
+
+---
+
+## 署名与许可 / Attribution & License
+
+```
+SCI-writing-VIP © 2026 连彬 (Bin Lian) — ORCID 0000-0002-1477-9137
+https://github.com/speetle/SCI-writing-VIP · 首发 2026-09-21
+```
+
+本作品为个人非商业授权。**转载、引用、衍生均须完整保留以上署名与 `LICENSE` 全文**；禁止移除或泛化署名，禁止重新打包发布到任何分发平台。完整条款见 `LICENSE`。

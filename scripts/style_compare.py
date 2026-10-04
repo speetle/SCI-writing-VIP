@@ -24,7 +24,32 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from extract_language import CONNECTIVES, HEDGES, BOOSTERS, AI_TEMPLATES, style_stats  # noqa: E402
 
 
-def read_text(p):
+def strip_citations(t):
+    """剔除**紧贴词尾/右括号的引文编号**（Nature/Cell 系正文常见 `types21,42,57,` / `alone2.`）。
+
+    必要性（[ERR-2026W40-50]）：PMC 全文语料中，尾随引文编号会让分句正则
+    `(?<=[.!?])\\s+(?=[A-Z(])` **失配**——`…as shown. 3 A recent…` 之类的编号把两句粘成一句，
+    导致全文语料的平均句长 / 长句占比 / 连接词密度**整体虚高**（D05 实测同章节 42 句 → 32 句）。
+
+    ⚠️ **作用域仅限样本 A（真人全文语料）**：训练稿从不用上标引文编号，
+    而本文本正则会把 `CD8` / `PD-1` / `STAT3` / `SPP1` 这类**带数字的规范术语**误伤，
+    故 `--strip-citations` **不施加于样本 B**（见 main()）。
+
+    两条规则（**第二条才是 `-50` 的真因**）：
+      ① 紧贴词尾/右括号者：`types21,42,57,`、`alone2.`
+      ② **紧贴句号者**：`techniques.24,28–35 As summarized…`——句号后无空格的编号使分句正则失配，
+         把两句粘成一句。仅在"编号后接空白 + 大写/左括号"（即确为句边界）时剔除以避免误伤小数
+         （`14.9–18.4 kcal` 中 `.4` 后是小写，不动）。
+    """
+    # ⚠️ 只保留"句号 + 编号 + 句边界"这一条。
+    # 曾试过的"词尾+编号"通用规则（`(?<=[A-Za-z])\d+`）会破坏规范术语：
+    # `SPP1hi` → `SPPhi`、`CSF1R` → `CSFR`、`CD39` → `CD`（2026-10-03 实测，已回退）。
+    # 且该形态**不导致合并句**（编号在句号之前），对句长类指标零影响，故不必要。
+    t = re.sub(r"(?<![0-9])\.\d{1,3}(?:[,\-\u2013\u2014]\d{1,3})*(?=\s+[A-Z(])", ".", t)
+    return t
+
+
+def read_text(p, strip_cit=False):
     """提取稿件正文。
 
     必须剔除的内容（否则会把"改动说明里引用的黑名单短语"误判为正文命中）：
@@ -36,6 +61,8 @@ def read_text(p):
     """
     with open(p, encoding="utf-8") as f:
         t = f.read()
+    if strip_cit:
+        t = strip_citations(t)
     cut = t.find("<!-- APPENDIX -->")
     if cut != -1:
         t = t[:cut]
@@ -48,6 +75,10 @@ def read_text(p):
     t = re.sub(r"```.*?```", "", t, flags=re.S)      # 代码块
     t = re.sub(r"^#{1,6}\s.*$", "", t, flags=re.M)   # 标题
     t = re.sub(r"^\s*\|.*$", "", t, flags=re.M)      # 表格行
+    t = re.sub(r"^\s*\d+[.)]\s.*$", "", t, flags=re.M)  # 有序列表项（起草前声明块 `1. 稿件类型：…`）
+    # ⚠️ [ERR-2026W40-55] 缺这一行时，稿首「起草前四项强制声明」会被当成 1 个 104 词的"句子"，
+    #    使 style_compare 的 最长句 / 平均句长 / 句长 SD 全部虚高（本日实测 27.6 → 22.6、SD 21.2 → 9.4）。
+    #    `extract_prose.py` 自 D04 起已内建该项（LIST_RE），此处对齐；`anti_ai_check.py` 同步修。
     t = re.sub(r"^\s*-{3,}\s*$", "", t, flags=re.M)  # 分隔线
     t = re.sub(r"`[^`]*`", "", t)                    # 行内代码
     t = re.sub(r"[*_\[\]]", "", t)
@@ -181,14 +212,17 @@ def main():
     ap.add_argument("--human", required=True, help="样本A：真人语料文本")
     ap.add_argument("--mine", required=True, help="样本B：我的稿子")
     ap.add_argument("--out", default="")
+    ap.add_argument("--strip-citations", action="store_true",
+                    help="仅对样本 A（真人全文语料）剔除紧贴词尾/右括号的引文编号（PMC 全文用；"
+                         "样本 B 不施加，以免误伤 CD8/PD-1/SPP1 等含数字术语）")
     ap.add_argument("--label-a", default="样本A 真人语料")
     ap.add_argument("--label-b", default="样本B 我的初稿")
     a = ap.parse_args()
 
-    sa = style_stats(split_sentences(read_text(a.human)))
-    sb = style_stats(split_sentences(read_text(a.mine)))
-    ea = extra_metrics(split_sentences(read_text(a.human)))
-    eb = extra_metrics(split_sentences(read_text(a.mine)))
+    sa = style_stats(split_sentences(read_text(a.human, strip_cit=a.strip_citations)))
+    sb = style_stats(split_sentences(read_text(a.mine, strip_cit=False)))
+    ea = extra_metrics(split_sentences(read_text(a.human, strip_cit=a.strip_citations)))
+    eb = extra_metrics(split_sentences(read_text(a.mine, strip_cit=False)))
     sa.update(ea)
     sb.update(eb)
 
@@ -197,6 +231,10 @@ def main():
         "",
         f"- {a.label_a}：`{a.human}`（{sa.get('sentences')} 句 / {sa.get('words')} 词）",
         f"- {a.label_b}：`{a.mine}`（{sb.get('sentences')} 句 / {sb.get('words')} 词）",
+        "",
+        (f"- 引文编号口径：样本 A **已剔尾随引文编号**（`--strip-citations`）；样本 B 未施加"
+         if a.strip_citations else
+         "- 引文编号口径：**未施加**（样本 A 为摘要级语料时无须；全文语料请加 `--strip-citations`）"),
         "",
         "> 阈值仅为本系统自检口径，非文献定论。样本 A 是摘要级语料时，其句长天然短于全文正文，",
         "> 因此「句长类」指标的同口径比较优先级低于「连接词密度 / hedge-booster 比 / 模板短语」类指标。",
