@@ -36,22 +36,41 @@ def set_cn(run, latin="Times New Roman", ea=CN_FONT):
     run._element.rPr.rFonts.set(qn("w:eastAsia"), ea)
 
 
+def _add_runs(p, text, base_size=None, bold=False, italic=False):
+    """按反引号切分写入段落：反引号内用等宽字体，其余用正文字体。
+
+    修复：加粗/斜体区间内嵌行内代码（如 **`>5` 占 68.0%**）时，
+    旧实现只剥掉外层 ** 或 *，内层反引号会原样落进 Word。
+    """
+    parts = text.split("`")
+    for idx, seg in enumerate(parts):
+        if seg == "":
+            continue
+        r = p.add_run(seg)
+        if idx % 2 == 1:
+            set_cn(r, latin=MONO, ea=MONO)
+            r.font.size = Pt((base_size or 10.5) - 1)
+        else:
+            set_cn(r)
+            if base_size:
+                r.font.size = Pt(base_size)
+        r.bold = bold
+        r.italic = italic
+
+
 def add_inline(p, text, base_size=None):
     """把含行内标记的文本写入段落（保留中英文混排）。"""
     for tok in INLINE.split(text):
         if not tok:
             continue
         if tok.startswith("**") and tok.endswith("**") and len(tok) > 4:
-            r = p.add_run(tok[2:-2]); r.bold = True; set_cn(r)
+            _add_runs(p, tok[2:-2], base_size, bold=True)
         elif tok.startswith("`") and tok.endswith("`") and len(tok) > 2:
-            r = p.add_run(tok[1:-1]); set_cn(r, latin=MONO, ea=MONO)
-            r.font.size = Pt((base_size or 10.5) - 1)
+            _add_runs(p, tok, base_size)
         elif tok.startswith("*") and tok.endswith("*") and len(tok) > 2:
-            r = p.add_run(tok[1:-1]); r.italic = True; set_cn(r)
+            _add_runs(p, tok[1:-1], base_size, italic=True)
         else:
-            r = p.add_run(tok); set_cn(r)
-        if base_size:
-            r.font.size = Pt(base_size)
+            _add_runs(p, tok, base_size)
 
 
 def split_row(line):

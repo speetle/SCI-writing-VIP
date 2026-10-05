@@ -46,6 +46,10 @@ CTX.verify_mode = ssl.CERT_NONE
 UA = {"User-Agent": "SCI-writing-VIP-pusher", "Accept": "application/vnd.github+json"}
 SKIP_DIRS = {".git", "__pycache__", "_cache", "dist", ".venv", "node_modules"}
 SKIP_SUFFIX = (".pyc", ".pyo", ".tmp", ".log")
+# 🔴 本地专用：**绝不外发**（不是遗漏，是决定；勿"顺手补上"）
+#    push_repo_to_github.py 的 --create 分支把一篇未发表课题的题目硬编码为默认仓库描述，
+#    公开即提前泄题 → 保留为本地工具。
+LOCAL_ONLY = ("scripts/push_repo_to_github.py",)
 # 🔴 仓库自有文件：本地 skill 目录不收，但**绝不可判为"待删"**（删了不可逆）
 PROTECT = ("README", "CHANGELOG", "LICENSE", "docs/", ".gitignore")
 
@@ -96,8 +100,12 @@ def walk_local(root):
         for fn in filenames:
             if fn.endswith(SKIP_SUFFIX) or fn.startswith("."):
                 continue
+            if ".bak" in fn:          # 备份文件（含 .bak-YYYYMMDD 形式）一律不外发
+                continue
             p = os.path.join(dirpath, fn)
             rel = os.path.relpath(p, root).replace(os.sep, "/")
+            if rel in LOCAL_ONLY:     # 本地专用（见文件头 LOCAL_ONLY 注释）
+                continue
             with open(p, "rb") as f:
                 out[rel] = f.read()
     return out
