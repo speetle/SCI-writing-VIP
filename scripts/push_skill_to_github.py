@@ -5,8 +5,11 @@
 【为什么要用这个脚本而不是 `git push`】
 WorkBuddy 沙箱代理放行 `api.github.com`、拦截/严重拖慢 `github.com`；
 且本机 `~/.gitconfig` 里那条 credential helper 指向一个**已不存在的 gh 路径**（无凭据）。
-故写操作走 Git Data API（POST /git/blobs、POST /git/trees、POST /git/commits、PATCH /git/refs），
-只读探测走 api.github.com。
+故写操作走 Git Data API（POST /git/blobs、POST /git/trees、POST /git/commits、
+更新分支 PATCH /git/refs/heads/<b>、**创建标签 POST /git/refs**），只读探测走 api.github.com。
+⚠️ 创建 ref 的端点**不带路径后缀**：`POST /repos/{o}/{r}/git/refs` + body `{"ref":"refs/tags/x","sha":…}`。
+   写成 `POST /git/refs/tags/x` 会被 GitHub 路由到「update a reference」（PATCH 语义），
+   ref 不存在时返回 **422 Reference does not exist**（2026-10-05 实测踩过，见 v2.6.1）。
 
 【权限】需要 token。三种取法任选其一：
   1) `export GH_TOKEN=ghp_xxx`
@@ -25,8 +28,11 @@ WorkBuddy 沙箱代理放行 `api.github.com`、拦截/严重拖慢 `github.com`
       --skill ~/.workbuddy/skills/SCI-writing-VIP --repo speetle/SCI-writing-VIP \
       --msg "feat: v2.4 — 三层取材（近十年顶刊 reserve 池）+ 问题表述强度训练 + 日课静默/周报推送"
 
-  # 3) 打标签（可选）
-  GH_TOKEN=ghp_xxx GH_TAG=v2.4.0 python3 push_skill_to_github.py ... --tag
+  # 3) 打标签（可选，随机推送一并创建）
+  GH_TOKEN=ghp_xxx python3 push_skill_to_github.py ... --tag v2.6.1
+
+  # 4) 补打/改打标签（内容已推完时用；**不新建任何 commit**）
+  GH_TOKEN=ghp_xxx python3 push_skill_to_github.py ... --tag v2.6.1 --tag-only
 """
 import argparse
 import base64
@@ -111,6 +117,32 @@ def walk_local(root):
     return out
 
 
+def _make_tag(repo, tag, sha, token):
+    """创建标签 ref，指向 sha。
+
+    🔴 端点必须是 `POST /repos/{repo}/git/refs`，body 里带 `{"ref": "refs/tags/<tag>"}`。
+    写成 `POST /repos/{repo}/git/refs/tags/<tag>` 是**错的**：GitHub 会把该路径
+    路由到「update a reference」（本应 PATCH），ref 不存在时返回
+    `422 {"message":"Reference does not exist"}` —— 报错文档链接会指向
+    `https://docs.github.com/rest/git/refs#update-a-reference`，极易被误读成「无权限」。
+    2026-10-05 推送 v2.6.0 时即因此静默跳过标签。
+    返回 True 表示新建成功；False 表示跳过（已存在 / 失败），**均不影响内容推送**。
+    """
+    try:
+        api(f"/repos/{repo}/git/refs", "POST",
+            {"ref": f"refs/tags/{tag}", "sha": sha}, token)
+        print(f"[标签] {tag} → {sha[:10]}")
+        return True
+    except RuntimeError as e:
+        msg = str(e)
+        if "already exists" in msg:
+            print(f"[标签] {tag} 已存在，跳过（不移动既有标签）。")
+        else:
+            print(f"[标签] ❌ 创建失败：{msg[:220]}")
+            print("       ⚠️ 标签独立于内容：本次内容推送已成功，不影响交付。")
+        return False
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--skill", default=os.path.expanduser("~/.workbuddy/skills/SCI-writing-VIP"),
@@ -121,6 +153,8 @@ def main():
     ap.add_argument("--token", default="", help="（可选）也可直接用环境变量 GH_TOKEN")
     ap.add_argument("--dry-run", action="store_true", help="只比对本地/远端差异，不推送")
     ap.add_argument("--tag", default="", help="推送后打标签（需 token）")
+    ap.add_argument("--tag-only", action="store_true",
+                    help="只打标签、**不新建任何 commit**（内容已推完时补打/改打用；须配合 --tag）")
     ap.add_argument("--prune", action="store_true",
                     help="删除远端有本地无的文件（**默认不开**）。"
                          "⚠️ 2026-10-01 实测：远端有 README/CHANGELOG/LICENSE/.gitignore/docs/PUBLISH.md/"
@@ -190,6 +224,14 @@ def main():
     except Exception as e:
         sys.exit(f"\n🔴 凭据校验失败，已中止，未写入任何内容：\n   {e}")
 
+    # --tag-only：内容已在远端，只补/改标签，**不建 blob/tree/commit**
+    if a.tag_only:
+        if not a.tag:
+            sys.exit("🔴 --tag-only 须同时给出 --tag <名称>。")
+        _make_tag(a.repo, a.tag, head_sha, token)
+        print(f"\n✅ 仅标签操作完成（未新建 commit）｜main HEAD 仍为 {head_sha[:10]}")
+        return
+
     add_sha = {}
     for rel in to_add:
         nb = api(f"/repos/{a.repo}/git/blobs", "POST",
@@ -215,12 +257,7 @@ def main():
         {"sha": commit["sha"], "force": False}, token)
 
     if a.tag:
-        try:
-            api(f"/repos/{a.repo}/git/refs/tags/{a.tag}", "POST",
-                {"ref": f"refs/tags/{a.tag}", "sha": commit["sha"]}, token)
-            print(f"[标签] {a.tag} → {commit['sha'][:10]}")
-        except RuntimeError as e:
-            print(f"[标签] 跳过（已存在或无权限）：{e}")
+        _make_tag(a.repo, a.tag, commit["sha"], token)
 
     # 核验
     vt = api(f"/repos/{a.repo}/git/trees/{commit['sha']}?recursive=1")

@@ -2,6 +2,21 @@
 
 遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [2.6.1] — 2026-10-05
+
+### 修复
+- **`scripts/push_skill_to_github.py` 打标签必然失败**（`--tag` 静默跳过）。根因：创建 ref 的端点写成了
+  `POST /repos/{o}/{r}/git/refs/tags/<tag>`，而 GitHub 语义是 **`POST /repos/{o}/{r}/git/refs`**
+  ＋ body `{"ref":"refs/tags/<tag>","sha":…}`。错写会被路由到「update a reference」，ref 不存在时返回
+  `422 Reference does not exist`（报错文档链接指向 `#update-a-reference`，**极易被误读为「无权限」**）。
+  实测：v2.6.0 推送时内容 100% 成功（44 文件 sha 全对），**标签静默丢失**。
+  修法：抽出 `_make_tag()` 用正确端点；并把 422 拆成「已存在」（跳过）与「其他」（报错，并注明不影响内容）。
+- 标签失败文案由「跳过（已存在或无权限）」改为**按响应体区分** —— 原文案把端点 bug 误导成权限问题。
+
+### 新增
+- **`--tag-only`**：内容已推完时补打/改打标签用，**不新建任何 blob/tree/commit**。
+  原流程在「无变化」重跑时会造一个空提交（`base_tree` ＋空 `entries` 仍会 commit）。
+
 ## [2.6.0] — 2026-10-05
 
 ### 修复
