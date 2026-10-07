@@ -6,6 +6,14 @@
 >
 > © 2026 连彬 (Bin Lian). All rights reserved.
 
+> ⚠️ **历史版本与许可变更 / Version & licence notice**
+>
+> **v2.0.0 及更早版本以 MIT 协议发布**，该授权对当时已发出的副本**不可撤销**——这些旧版本可被自由再分发，包括商业转售。本人无法回收已发出的 MIT 副本。
+> **v2.0.1 及之后所有版本**适用本仓库的 `LICENSE`（个人非商业使用；禁止移除或篡改署名；禁止将作品整体或实质性部分重新打包发布到任何技能市场）。本作品**不在任何技能市场出售**，也从未授权任何第三方转售。
+> 请始终使用 `main` 分支的最新版，勿使用旧版本 zip。
+>
+> Releases up to and including v2.0.0 were published under the MIT License. That grant is irreversible for copies already distributed, so those early versions may be redistributed, including for commercial resale, and cannot be recalled. All versions from v2.0.1 onward are governed by the `LICENSE` file in this repository. This work is not sold on any skills marketplace and no third-party resale has been authorised. Always use the latest `main` branch.
+
 ---
 
 > 可持续自我迭代型**生物医药** SCI 科研助手 —— 用真实 PubMed 文献训练「如何表述问题」，而不是套用通用模板。
