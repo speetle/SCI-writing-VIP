@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-anti_ai_check.py — 「AI 味」机器检测（英文稿）
+anti_ai_check.py — “AI 味”机器检测（英文稿）
 
 配套 references/anti-ai-checklist.md §二（12 条负面清单）与 §四（中译英痕迹）。
 纯标准库、不联网、可对任何 .md/.txt 运行。
 
-为什么需要它：清单里写着「加载去 AI 味技能（中文 qu-aiwei-zh／英文 humanizer）」，
+为什么需要它：清单里写着“加载去 AI 味技能（中文 qu-aiwei-zh／英文 humanizer）”，
 但那是通用文本改写技能，不看学术稿的特有模式（无来源的量化、伪重复、
 按操作顺序罗列结果等）。本脚本把 §二 的条目落成可复现的正则判据，
-使每周的检测口径一致、可环比——口径不一致的「AI 味指数」没有比较意义。
+使每周的检测口径一致、可环比——口径不一致的“AI 味指数”没有比较意义。
 
 用法
   python3 anti_ai_check.py --file 04_仿写训练/2026-W39_training_manuscript.md
@@ -17,7 +17,7 @@ anti_ai_check.py — 「AI 味」机器检测（英文稿）
 
 说明
   - 默认跳过引用块（> 开头）、代码块、表格；只检测正文散文。
-  - `[TO BE MEASURED]` 等占位标记不计入「无来源的量化」。
+  - `[TO BE MEASURED]` 等占位标记不计入“无来源的量化”。
   - 得分口径：10 - 加权命中密度，四舍五入到整数，下限 1。分数越高越像人写。
     该口径由 W39 基线轮定义；改动口径必须在 EVOLUTION_LEDGER 里注明，
     否则跨周不可比。
@@ -72,7 +72,7 @@ RULES = [
 
 # §四 英文专用检查
 EN_RULES = [
-    # 仅在「data」作句子主语时告警：Whether ... data is doubtful 这类是合法用法，属误报
+    # 仅在“data”作句子主语时告警：Whether ... data is doubtful 这类是合法用法，属误报
     ("E1", "data is（学术惯例用 data are；限句首主语位置）",
      r"(?:^|(?<=[.!?]\s)|(?<=,\s))[Dd]ata is\b"),
     ("E2", "etc. 出现在正文", r"\betc\."),
@@ -85,7 +85,7 @@ EN_RULES = [
 LOW_SPEC = {"R4", "R6"}
 
 SKIP_LINE = re.compile(r"^\s*(?:>|\||```|\s*[-*]\s|\d+[.)]\s|#)")
-# ⚠️ `\d+[.)]\s` 为 2026-10-03 补入：此前**有序列表项**（稿首「起草前四项强制声明」的 `1. …`）
+# ⚠️ `\d+[.)]\s` 为 2026-10-03 补入：此前**有序列表项**（稿首“起草前四项强制声明”的 `1. …`）
 #    未被剔除，会被当作正文计入词数与 R 类命中（[ERR-2026W40-55]，与 `style_compare.py` 同步修）。
 PROTECTED = re.compile(r"\[TO BE MEASURED\]|\[PMID:\d+\]|GSE\d+|TCGA-[A-Z]+")
 
@@ -163,7 +163,7 @@ def scan(text):
 
 
 def strip_appendix(text):
-    """截断附录区，避免「本稿起草说明 / 指标表」里引用的黑名单短语被计入正文。
+    """截断附录区，避免“本稿起草说明 / 指标表”里引用的黑名单短语被计入正文。
 
     修复依据：[ERR-2026W39-13]（机检脚本被稿件附录污染）在 `style_compare.py` 已修复，
     但 `anti_ai_check.py` 至 D03 仍直接读整份文件 → 同一缺陷在本脚本复现
@@ -187,7 +187,7 @@ def main():
     a = ap.parse_args()
 
     raw = open(a.file, encoding="utf-8").read()
-    # 稿首素材来源声明：若声明了 PMID，则 R1/R12 的量化命中降级为「已声明来源」不计分
+    # 稿首素材来源声明：若声明了 PMID，则 R1/R12 的量化命中降级为“已声明来源”不计分
     # ⚠️ D07 修正：原正则 `PMID\s*\d{6,}` 无法容忍 markdown 强调标记（`PMID **42759982**`），
     #    导致"已声明来源"被误判为"未声明"。改为允许 PMID 与数字之间出现任意非数字字符（≤6 个）。
     head = raw[:raw.find("<!-- APPENDIX -->")] if "<!-- APPENDIX -->" in raw else raw[:1500]
@@ -218,7 +218,7 @@ def main():
     rep.append(f"- 检测脚本：`scripts/anti_ai_check.py`（配套 `references/anti-ai-checklist.md` §二/§四）")
     rep.append(f"- 正文范围：{'整份文件' if a.no_strip_appendix else '已截断 `<!-- APPENDIX -->` 并剔除稿首引用块'}")
     rep.append(f"- 稿首是否声明素材 PMID：{'是' if declares_source else '否'}"
-               + ("（R1/R12 命中降级为「已声明来源」，不计分，须逐值人工复核）" if declares_source else ""))
+               + ("（R1/R12 命中降级为“已声明来源”，不计分，须逐值人工复核）" if declares_source else ""))
     rep.append(f"- 正文词数（散文部分）：{nwords}")
     rep.append(f"- 高特异性规则加权命中：{weighted:g}；每千词密度：{density:.2f}")
     rep.append(f"- 低特异性规则加权命中（需人工裁定，不计分）：{lowspec:g}")

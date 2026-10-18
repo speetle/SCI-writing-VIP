@@ -5,7 +5,7 @@
 对当日文献逐篇抽取四栏：科学问题 / 实验设计类型 / 核心结论 / 局限性。
 抽取全部基于 PubMed 摘要原文的句子级规则匹配，**不做任何生成式改写**：
   - 命中的句子原样保留（英文原句），供逐条回溯；
-  - 未命中即写「摘要未述」，**不推断、不补写**。
+  - 未命中即写“摘要未述”，**不推断、不补写**。
 
 用法:
   python3 archive_extract.py --csv 01_文献库/2026-W39/D01/papers.csv \
@@ -62,10 +62,10 @@ CUES = {
         r"\bfurthermore,?\s+(?:we|these)\b",
     ],
     # ⚠️ D05（2026-09-25）拆表：原 limitation 表混装了两类互不相干的线索——
-    #   ①「真·局限指针」(`limitation` / `limited by` / `caution` / `lack of` / `cannot rule out`)
-    #   ②「展望/设限指针」(`future studies` / `warrant(s) further` / `further studies are needed`)
-    #   后者是 **outlook**，不是 limitation。混装使「写明局限性」的篇数被系统性高估
-    #   （D05 实测：10 篇「明写局限」中，2 篇实为展望句）。→ 已拆入 CUES["outlook"]。
+    #   ①“真·局限指针”(`limitation` / `limited by` / `caution` / `lack of` / `cannot rule out`)
+    #   ②“展望/设限指针”(`future studies` / `warrant(s) further` / `further studies are needed`)
+    #   后者是 **outlook**，不是 limitation。混装使“写明局限性”的篇数被系统性高估
+    #   （D05 实测：10 篇“明写局限”中，2 篇实为展望句）。→ 已拆入 CUES["outlook"]。
     "limitation": [
         r"\blimitation", r"\blimited by\b", r"\bshould be interpreted with caution\b",
         r"\bremains to be (?:determined|validated|confirmed|elucidated)",
@@ -79,11 +79,11 @@ CUES = {
     ],
 }
 
-# --- 局限句「指代对象」判定（D05 新增，配合 A-42 / D-16 的发现） ----------------
+# --- 局限句“指代对象”判定（D05 新增，配合 A-42 / D-16 的发现） ----------------
 # 背景：`limitation` / `limited by` 在真实摘要中至少四类指代——
 #   ① 本研究缺陷（自陈）② 现行药物/疗法的局限 ③ 现行方法/数据源的局限 ④ 领域知识缺口。
-#   仅 ① 属「作者自陈局限」，其余三类混入会使统计失真。
-#   ⚠️ 本判定**只做标签，不删句、不改写**（红线：不推断）。判不出自陈的，一律标「需人工判定」。
+#   仅 ① 属“作者自陈局限”，其余三类混入会使统计失真。
+#   ⚠️ 本判定**只做标签，不删句、不改写**（红线：不推断）。判不出自陈的，一律标“需人工判定”。
 LIMIT_SELF = re.compile(
     r"(?:\b(?:our|this|the present|the current)\s+(?:study|work|analysis|review|report|cohort|model|"
     r"investigation|framework)\b[^.]{0,160}\blimit"
@@ -132,7 +132,7 @@ def split_sentences(text):
     text = re.sub(r"\s+", " ", text or "").strip()
     if not text:
         return []
-    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z(])", text)
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z(]|[a-z]{1,3}[A-Z0-9])", text)
     return [p.strip() for p in parts if len(p.strip()) > 20]
 
 
@@ -147,11 +147,11 @@ def pick(sents, keys, maxn=2):
     return out
 
 
-# --- 位置兜底（线索未命中时使用，仍为「原文逐字引用」，不做任何推断） ---------
+# --- 位置兜底（线索未命中时使用，仍为“原文逐字引用”，不做任何推断） ---------
 # 背景：D03 实测线索覆盖率仅约 44%——摘要中确实存在研究目的句与结论句，
 # 但其表述（`This study explored ...` / `We developed ...` / `We found ...`）
 # 不在原线索表内。修复分两步：① 扩充线索词；② 仍不命中时启用**位置兜底**，
-# 并在归档中显式标注「位置兜底」，保证可审计（不推断、不补写、不改写）。
+# 并在归档中显式标注“位置兜底”，保证可审计（不推断、不补写、不改写）。
 def positional_fallback(sents, role):
     """按位置取兜底句：question → 首个含第一人称/研究主语的句子；conclusion → 末句。"""
     if not sents:
@@ -194,7 +194,7 @@ def main():
         f"# {a.week} D{a.day:02d} 文献基础归档笔记（阶段1-1）",
         "",
         f"- 当日文献：**{len(rows)} 篇**（清单见同目录 `阅读清单.md`）",
-        "- 抽取方式：**摘要级句级规则抽取**。命中句原样保留英文原文；未命中写「摘要未述」，不做推断补写。",
+        "- 抽取方式：**摘要级句级规则抽取**。命中句原样保留英文原文；未命中写“摘要未述”，不做推断补写。",
         "- 证据边界：**全部为摘要级信息，未核验全文**。正文/图表级细节、真实局限性陈述须在 L2 深读时以全文为准。",
         "",
         "---",
@@ -259,12 +259,12 @@ def main():
         "",
         f"- 作者**自陈局限**的篇数：**{n_lim}/{len(rows)}**（{n_lim/max(len(rows),1)*100:.0f}%）",
         f"- `limitation` 类词命中但**指代对象非本研究**（现行药物/疗法/方法或领域缺口）的篇数：**{n_lim_other}**（须人工判定，**不计入自陈局限**）",
-        f"- 局限栏为「摘要未述」的篇数：**{n_lim_none}**",
+        f"- 局限栏为“摘要未述”的篇数：**{n_lim_none}**",
         f"- 展望/设限句命中篇数（原属 limitation 表，D05 已拆分独立）：**{n_outl}**",
         f"- 科学问题栏有内容：**{n_q}/{len(rows)}**（其中位置兜底 {n_q_fb} 篇，已在栏内标注）",
         f"- 核心结论栏有内容：**{n_c}/{len(rows)}**（其中位置兜底 {n_c_fb} 篇，已在栏内标注）",
         "- ⚠️ 位置兜底说明：线索未命中时按位置取句（question→首个含研究主语的句子；"
-        "conclusion→末 1–2 句），**仍为原文逐字引用**，已在栏内标「线索未命中→位置兜底句」，可逐条回溯核验。",
+        "conclusion→末 1–2 句），**仍为原文逐字引用**，已在栏内标“线索未命中→位置兜底句”，可逐条回溯核验。",
         "- 设计类型命中分布（一篇可多标）：",
         "",
         "| 设计类型 | 篇数 |",

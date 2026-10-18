@@ -3,7 +3,7 @@
 """extract_language.py — 阶段1-2 语言范式原料提取（样本A：真人原文）
 
 从当日文献摘要中，按**修辞功能角色**把真人句子分类导出，并统计文体指标。
-输出的是**原料**（真实句子 + PMID），不是结论——「地道句式清单」须由
+输出的是**原料**（真实句子 + PMID），不是结论——“地道句式清单”须由
 模型在原料基础上筛选、归纳后写入 03_语言范式库/，并保留原文引句与 PMID。
 
 角色分类（对应 IMRaD 各段的实际功能）:
@@ -115,16 +115,16 @@ CONNECTIVES = [
     "accordingly", "similarly", "ultimately", "finally", "first", "second", "then",
 ]
 
-# HEDGES = v1.0「核心口径」（**保持原值不变，历史数值可复现**）
+# HEDGES = v1.0“核心口径”（**保持原值不变，历史数值可复现**）
 # ⚠️ v2.0（2026-09-26，W39 D06）留痕：v1.0 词表**漏收大量情态/认知限定词**，实测低估约 42%。
 #   证据（D06 语料 795 句）：v1.0 命中 165 = 20.8/百句；漏收候选（>0 者）合计 70 = 8.81/百句；
 #   两者合并 235 = 29.6/百句。漏收高频项：can 11｜limited 11｜should 7｜unclear 7｜exploratory 7｜
 #   often 4｜cannot 3｜estimates 3｜estimated 3｜no significant 3｜did not 2｜preliminary 2。
-#   → 直接后果：D03/D04 的「hedge 密度 5.3 / 6.2 未入区间」判据建立在**低估**过的分母上；
-#     D05 声称的「rev2 实有 4 处情态、脚本只计 1 处」得到证实。
+#   → 直接后果：D03/D04 的“hedge 密度 5.3 / 6.2 未入区间”判据建立在**低估**过的分母上；
+#     D05 声称的“rev2 实有 4 处情态、脚本只计 1 处”得到证实。
 #   处置：① 保留 v1.0（`HEDGES`）不动，供历史复现；② 新增 v2.0（`HEDGES_V2`）为**新判据口径**；
 #     ③ `style_stats` 同时输出两组值，键名后缀区分（无后缀 = v1.0 核心；`_v2` = 扩展）；
-#     ④ 依 [ERR-2026W39-26]「修复须同步同类脚本」：`style_compare.py` 直接 `from extract_language import`，
+#     ④ 依 [ERR-2026W39-26]“修复须同步同类脚本”：`style_compare.py` 直接 `from extract_language import`，
 #        本处改动自动生效，无需二次修改（已核）。
 #   立 [ERR-2026W39-35]。
 HEDGES = [
@@ -134,7 +134,7 @@ HEDGES = [
 ]
 
 # v2.0 扩展词表：仅收录**认知/情态限定**与**自我设限标记**，不收录纯否定结果标记
-# （`no significant` / `did not` / `failed to` 属「阴性结果表述」，单列不计入 hedge，避免混淆两类语义）。
+# （`no significant` / `did not` / `failed to` 属“阴性结果表述”，单列不计入 hedge，避免混淆两类语义）。
 HEDGES_EXTRA = [
     # 情态动词（v1.0 仅收 may/might/could，漏 can/cannot/would/should）
     "can", "cannot", "would", "should",
@@ -174,7 +174,7 @@ def split_sentences(text):
     text = re.sub(r"\s+", " ", text or "").strip()
     if not text:
         return []
-    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z(])", text)
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z(]|[a-z]{1,3}[A-Z0-9])", text)
     return [p.strip() for p in parts if len(p.split()) >= 5]
 
 
@@ -255,7 +255,7 @@ def main():
         "",
         f"- 来源：`{os.path.basename(a.csv)}`，共 **{len(rows)} 篇**摘要",
         f"- 抽取句数：**{len(all_sents)}** 句（仅摘要，未含全文）",
-        "- 用途：供归纳「地道高频学术句式清单 / 逻辑衔接范式 / 真人写作习惯特征 / AI 腔黑名单」四份累积文件。",
+        "- 用途：供归纳“地道高频学术句式清单 / 逻辑衔接范式 / 真人写作习惯特征 / AI 腔黑名单”四份累积文件。",
         "- **证据边界**：本文件只是原料。任何被写入范式库的句子，必须在此文件中可回溯到 PMID。",
         "",
         "---",
@@ -290,7 +290,7 @@ def main():
     # 原写法 `IF {if_latest} ({if_bin})` **丢掉了 if_year_label / if_metric**，
     # 而 papers.csv 中同列并存两种口径：`JIF_bioxbio`（官方 JIF）与
     # `OA_2yrMCC`（`[代理]OpenAlex-2yrMCC`）。不标注 → 下游难以区分，
-    # 直接违反项目红线「官方 JIF 与 OpenAlex 代理值**严禁混称**」。
+    # 直接违反项目红线“官方 JIF 与 OpenAlex 代理值**严禁混称**”。
     # D01 实测：75 篇中 45 篇（60%）为代理值。**改为一律显式标注**。
     def _if_tag(r):
         m = (r.get("if_metric") or "").strip()

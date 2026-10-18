@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fetch_pmc_fulltext.py —— 按单篇抓取 PMC 全文并结构化导出（供「深度拆解」使用）
+fetch_pmc_fulltext.py —— 按单篇抓取 PMC 全文并结构化导出（供“深度拆解”使用）
 
 职责：给定 PMID 或 PMCID，从 Europe PMC 取 fullTextXML，缓存本地，并导出一份
       便于人工/AI 逐图拆解的结构化 Markdown（章节骨架 + 图注全文 + Methods + Results + Discussion）。
@@ -14,7 +14,7 @@ fetch_pmc_fulltext.py —— 按单篇抓取 PMC 全文并结构化导出（供�
 深度声明（硬约束，与 SKILL.md 一致）
 ----------------------------------
 - 取到全文 → 输出头部标 `depth: full`，方可书写方法学细节与图注级判断
-- 取不到全文 → 输出头部标 `depth: abstract-only`，**只给摘要**，禁止据此写「精读发现」
+- 取不到全文 → 输出头部标 `depth: abstract-only`，**只给摘要**，禁止据此写“精读发现”
 - 官方 JIF 与 OpenAlex 代理值严禁混称；本脚本不涉及 IF，仅搬运全文
 
 踩坑记录（已验证）

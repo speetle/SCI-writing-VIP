@@ -8,12 +8,12 @@ WorkBuddy 沙箱代理放行 `api.github.com`、拦截/严重拖慢 `github.com`
 故写操作走 Git Data API（POST /git/blobs、POST /git/trees、POST /git/commits、
 更新分支 PATCH /git/refs/heads/<b>、**创建标签 POST /git/refs**），只读探测走 api.github.com。
 ⚠️ 创建 ref 的端点**不带路径后缀**：`POST /repos/{o}/{r}/git/refs` + body `{"ref":"refs/tags/x","sha":…}`。
-   写成 `POST /git/refs/tags/x` 会被 GitHub 路由到「update a reference」（PATCH 语义），
+   写成 `POST /git/refs/tags/x` 会被 GitHub 路由到“update a reference”（PATCH 语义），
    ref 不存在时返回 **422 Reference does not exist**（2026-10-05 实测踩过，见 v2.6.1）。
 
 【权限】需要 token。三种取法任选其一：
   1) `export GH_TOKEN=ghp_xxx`
-  2) `python3 push_skill_to_github.py --token ghp_xxx`   （会打印一次后由 shell 处理，见下方「安全」说明）
+  2) `python3 push_skill_to_github.py --token ghp_xxx`   （会打印一次后由 shell 处理，见下方“安全”说明）
   3) `read -rs GH_TOKEN` 后直接跑（不落历史）
 
 ⚠️ 安全：token 只经环境变量传递，脚本**绝不写盘、绝不 echo**。
@@ -122,9 +122,9 @@ def _make_tag(repo, tag, sha, token):
 
     🔴 端点必须是 `POST /repos/{repo}/git/refs`，body 里带 `{"ref": "refs/tags/<tag>"}`。
     写成 `POST /repos/{repo}/git/refs/tags/<tag>` 是**错的**：GitHub 会把该路径
-    路由到「update a reference」（本应 PATCH），ref 不存在时返回
+    路由到“update a reference”（本应 PATCH），ref 不存在时返回
     `422 {"message":"Reference does not exist"}` —— 报错文档链接会指向
-    `https://docs.github.com/rest/git/refs#update-a-reference`，极易被误读成「无权限」。
+    `https://docs.github.com/rest/git/refs#update-a-reference`，极易被误读成“无权限”。
     2026-10-05 推送 v2.6.0 时即因此静默跳过标签。
     返回 True 表示新建成功；False 表示跳过（已存在 / 失败），**均不影响内容推送**。
     """

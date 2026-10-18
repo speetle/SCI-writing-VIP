@@ -6,7 +6,7 @@ report_md_to_docx.py — 把《SCI 热点解读报告》的 Markdown 稿转为 .
 为什么单独写：每周报告是一份结构化长文（标题层级 + 大量表格 + 引用块 + 代码块）。
 用通用转换链（pandoc / LibreOffice）在本机不可用，而报告的表格式 IF 分布、
 方法与数据来源声明必须保持为**真表格**（不是截图、不是纯文本），
-否则「可核验」这一条在 Word 侧就断了。
+否则“可核验”这一条在 Word 侧就断了。
 
 用法
   python3 report_md_to_docx.py --md 02_热点报告/xxx.md --out 02_热点报告/xxx.docx

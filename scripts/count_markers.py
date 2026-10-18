@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-count_markers.py — 「句首标记词 / 让步对比结构 / 黑名单字面计数」统一口径测量器
+count_markers.py — “句首标记词 / 让步对比结构 / 黑名单字面计数”统一口径测量器
 
 为什么需要这个脚本（2026-09-28 / W40 D01 立）
 ------------------------------------------------
-W39 的「句首标记词句占比」基线（真人五日合并 8.85%）由一个**一次性的 /tmp 脚本**产出，
+W39 的“句首标记词句占比”基线（真人五日合并 8.85%）由一个**一次性的 /tmp 脚本**产出，
 其**词表、分句口径、过滤条件、脚本名四项口径中，只有脚本名被记录**，其余三项丢失。
 后果：任何新稿都无法用同一把尺子复测——基线不可复现，属 [ERR-2026W39-18]/[ERR-2026W39-23] 同族风险。
 
@@ -64,7 +64,7 @@ INITIAL_MARKERS = [m for m in INITIAL_MARKERS if not (m in _seen or _seen.add(m)
 CONCESSIVE = ["although", "whereas", "despite", "while", "though"]
 
 # ⚠️ 2026-09-28 口径复原说明（**必读**）
-# W39 的「句首标记词句占比 8.85%」由一次性 `/tmp/headconn_file.py` 产出，词表未记录。
+# W39 的“句首标记词句占比 8.85%”由一次性 `/tmp/headconn_file.py` 产出，词表未记录。
 # W40 D01 用上表 38 项复算 W39 七日语料，得 **7.27%**（低于旧报 ≈1.6pp）。
 # 逐项反解后确认差异**完全来自词表**：旧表额外包含 `further` 与让步连词（`although` /
 # `whereas` / `despite` / `while` / `though`）。
@@ -131,6 +131,15 @@ def main():
     text = open(a.corpus, encoding="utf-8").read()
     if a.strip_appendix and "<!-- APPENDIX -->" in text:
         text = text.split("<!-- APPENDIX -->", 1)[0]
+    # [ERR-2026W41-101] 与 count_connectors.read_sentences()/style_compare.read_text() 口径对齐：
+    #   稿首元信息行（引用块 / 标题 / 表格行 / 无序列表项 / 分隔线）若不清除，
+    #   会被当成独立"句子"进入分母（W41 D06 实测 count_connectors 句数 18→22 虚高 22%）。
+    text = re.sub(r"^>.*$", "", text, flags=re.M)
+    text = re.sub(r"^#{1,6}\s.*$", "", text, flags=re.M)
+    text = re.sub(r"^\s*\|.*\|\s*$", "", text, flags=re.M)
+    text = re.sub(r"^\s*[-*+]\s.*$", "", text, flags=re.M)
+    text = re.sub(r"^\s*-{3,}\s*$", "", text, flags=re.M)
+    text = re.sub(r"`[^`\n]*`", " ", text)
 
     r = count_markers(text)
     if r is None:
@@ -147,7 +156,7 @@ def main():
     print(f"  【A】句首标记词句占比（**双口径，严禁混称**）")
     print(f"       口径 A（**判据口径**，含 further + 让步连词；延续 W39 的 7%–11% 带）："
           f"{r['initial_marker_sentences_WIDE']} / {r['sentences']} = {r['initial_marker_share_pct_WIDE']:.2f}%")
-    print(f"       口径 B（窄口径，纯话语标记词，仅用于分析「推进外包」）："
+    print(f"       口径 B（窄口径，纯话语标记词，仅用于分析“推进外包”）："
           f"{r['initial_marker_sentences']} / {r['sentences']} = {r['initial_marker_share_pct']:.2f}%")
     print(f"       示例句首（窄口径）：")
     for e in r["initial_examples"]:

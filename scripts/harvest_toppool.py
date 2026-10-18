@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""harvest_toppool.py — 建「近十年顶刊 reserve 池」（2026-10-01 新增）
+"""harvest_toppool.py — 建“近十年顶刊 reserve 池”（2026-10-01 新增）
 
 【来源】先生 2026-10-01 指定：
-  「日常的写作训练，先从高分期刊中（IF＞20）选择，范围扩展到近十年，
-    但热点新闻依旧是近两年的，以三大顶刊为主，主要看最新的发现。」
+  “日常的写作训练，先从高分期刊中（IF＞20）选择，范围扩展到近十年，
+    但热点新闻依旧是近两年的，以三大顶刊为主，主要看最新的发现。”
 
 【与周课主池的分工（必读，勿混用）】
   ┌──────────────┬──────────────────────────────┬───────────────────────────────┐
@@ -16,10 +16,10 @@
   │              │ 深拆候选、问题表述演变分析     │ 三大顶刊系为主                │
   └──────────────┴──────────────────────────────┴───────────────────────────────┘
 
-⚠️ **不可把本池当周课主池用**：本池规模约 400–500 篇，撑不住「每日 ≥74 篇 × 7 天」，
+⚠️ **不可把本池当周课主池用**：本池规模约 400–500 篇，撑不住“每日 ≥74 篇 × 7 天”，
    且本池 IF 门槛为硬过滤（PENDING 一律丢弃，不得估算）。
 
-【为什么不能按字面「日课全部改 IF>20」】
+【为什么不能按字面“日课全部改 IF>20”】
   W40 实测：周池 520 篇中 IF>20 仅 **11 篇**（< 日课每日 ≥74 篇硬要求），
   其中三大顶刊仅 **3 篇**（Nature 1 / Nat Med 2），可全文（有 PMCID）仅 **3/11（27%）**。
   → 故取双层结构：**仿写素材优先顶刊层，归档保量仍走周课主池**。
@@ -88,7 +88,7 @@ TOP_JOURNALS = [
     "Genome Biology",
     "Autophagy",
 ]
-# 上面部分刊名在 PubMed [Journal] 字段里是缩写形式，这里给一份「重复检索用名」
+# 上面部分刊名在 PubMed [Journal] 字段里是缩写形式，这里给一份“重复检索用名”
 JOURNAL_ABBR = {
     "Nature Medicine": "Nat Med",
     "Nature Genetics": "Nat Genet",
@@ -167,7 +167,7 @@ def exempt_set():
     （W40 实测 Nat Biotechnol 有、Nat Immunol 等十余家没有），该刊文章就会**整批静默消失**——
     与 [ERR-2026W40-40]（Science 0 篇）完全同型。
     故改为：**只要在白名单里就豁免**，IF 仍一律写 PENDING、绝不估算。
-    → 从机制上保证「白名单里的刊一定在池里有representative」。
+    → 从机制上保证“白名单里的刊一定在池里有representative”。
     """
     s = set(IF_EXEMPT_JOURNALS)
     s |= {j.lower() for j in TOP_JOURNALS}
@@ -181,7 +181,7 @@ def bin_of(v, threshold=20.0):
 
     ⚠️ 2026-10-01 修正：原实现固定 `>=10 → ">10"`，在 min_if=20 时
     池内 100% 落 ">10"，该列**零区分度**（440/440 同值），
-    无法用于「顶刊 vs 主池」的横向对照。
+    无法用于“顶刊 vs 主池”的横向对照。
     """
     if v >= threshold:
         return f">{int(threshold)}"
@@ -212,7 +212,7 @@ def main():
     ap.add_argument("--start", default="2016/01/01", help="YYYY/MM/DD（EDAT 起）")
     ap.add_argument("--end", default="2026/09/30", help="YYYY/MM/DD（EDAT 止）")
     ap.add_argument("--recent-cap", type=int, default=2000,
-                    help="近 N 年每年取回上限（默认 2000；服务「主要看最新的发现」）")
+                    help="近 N 年每年取回上限（默认 2000；服务“主要看最新的发现”）")
     ap.add_argument("--early-cap", type=int, default=300,
                     help="2016–2024 每年取回上限（默认 300；早年只作表述演变的参考层，"
                          "取多了白烧 PubMed 时间）")
@@ -229,7 +229,7 @@ def main():
     cache_dir = a.cache_dir or os.path.join(a.out_dir, "_cache")
 
     # 【按年分块 + 期刊 OR 单次检索】
-    # ⚠️ 2026-10-01 踩坑：原实现「十年大窗口 × 逐刊 × 每刊双名」= 60 次 esearch，
+    # ⚠️ 2026-10-01 踩坑：原实现“十年大窗口 × 逐刊 × 每刊双名”= 60 次 esearch，
     #     PubMed 对超大窗口的 esearch 单次可达十几秒，实测跑满 16 min 仍卡在 esearch，
     #     _cache 空（连 summary 都没进）→ 预估总时长数小时。**已终止，改为本实现。**
     #     （同领域 TopN 期刊可用 OR 合成一词，PubMed 支持；再按年切窗，检索次数由 60 → 11。）
@@ -240,9 +240,9 @@ def main():
     for y in range(y_from, y_to + 1):
         y_end = f"{y}/12/31" if y < y_to else a.end
         win = f'("{y}/01/01"[EDAT] : "{y_end}"[EDAT])'
-        # 近 --recent-years 年放大候选上限（服务「主要看最新的发现」），早年仅作表述演变参考层。
+        # 近 --recent-years 年放大候选上限（服务“主要看最新的发现”），早年仅作表述演变参考层。
         # ⚠️ 2026-10-01 修正：原为 y >= y_to-1（最近两年），导致 2024 候选仅 300 → 保留 22 篇，
-        #    在「近十年」窗口内出现中段塌陷，会污染逐年断言强度趋势的判读。
+        #    在“近十年”窗口内出现中段塌陷，会污染逐年断言强度趋势的判读。
         ret = a.recent_cap if y >= (y_to - a.recent_years + 1) else a.early_cap
         try:
             hits, rs = harvest.esearch(f"{journal_or} AND {win} AND english[lang]",
@@ -291,10 +291,10 @@ def main():
         key = (iso or "").lower() or (full or "").lower()
         rec = itab.get(key.lower())
         if not rec:
-            # 【刊名硬门槛豁免】先生点名「以三大顶刊为主」。
+            # 【刊名硬门槛豁免】先生点名“以三大顶刊为主”。
             # 实测（2026-10-01）：journal_metrics.csv 973 刊里**没有 Science 主刊**，
             # 缓存中 437 篇 Science 全部因 IF 未匹配被剔除 → 池内三大顶刊之一是 0 篇，
-            # 与先生指令直接冲突。此处改走「刊名门槛」而非「估值门槛」：
+            # 与先生指令直接冲突。此处改走“刊名门槛”而非“估值门槛”：
             # 刊名在豁免集内 ⇒ 保留，但 **IF 一律标 PENDING，绝不补值、绝不估算**，
             # 并用 if_metric 列显式说明口径，供选材端自行判断。
             if key.lower() in exempt_set():
@@ -346,7 +346,7 @@ def main():
         print(f"[初筛] 刊名硬门槛豁免（IF 仍为 PENDING，未估算）：{sorted(exempt_keys)}")
     print(f"\n[初筛] 保留 {len(rows)}；剔除：{dict(dropped)}")
 
-    # --- 按年配额（近两年优先，服务「主要看最新的发现」）---
+    # --- 按年配额（近两年优先，服务“主要看最新的发现”）---
     by_year = {}
     for r in rows:
         by_year.setdefault(r["year"], []).append(r)

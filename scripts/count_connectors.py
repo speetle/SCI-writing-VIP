@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-count_connectors.py — 连接词 / 衔接手段「字面字符串」实测计数器。
+count_connectors.py — 连接词 / 衔接手段“字面字符串”实测计数器。
 
 背景（红线）：[ERR-2026W39-18] 手写归纳把 `moreover` / `in addition` 误记为 0 次，
-并把「低频合法词」升级为「绝对禁词」，导致修订反向失真。
+并把“低频合法词”升级为“绝对禁词”，导致修订反向失真。
 本脚本为该类计数提供**唯一可信来源**：一律对语料做字面字符串统计（不依赖分词，无口径歧义）。
 
 用法:
@@ -15,7 +15,7 @@ count_connectors.py — 连接词 / 衔接手段「字面字符串」实测计�
 计数口径：大小写不敏感的词边界匹配（\\b）；**句数按分句后计**，分句正则与
 `style_compare.py::split_sentences` 保持一致（否则与机检指标的分母不可比）。
 
-⚠️ 分母口径提示：本脚本的分句含「≥5 词」过滤，与 `extract_language.py` 报告的句数
+⚠️ 分母口径提示：本脚本的分句含“≥5 词”过滤，与 `extract_language.py` 报告的句数
 （其口径为全量切分）**不同**，两者分母不可混用；跨文件引用时须注明是哪个口径。
 """
 import argparse
@@ -74,12 +74,12 @@ ATTACHMENTS = OrderedDict([
 
 def split_sentences(text):
     """与 style_compare.py 保持完全一致的分句口径。"""
-    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z(])", text)
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z(]|[a-z]{1,3}[A-Z0-9])", text)
     return [p.strip() for p in parts if len(p.split()) >= 5]
 
 
 def read_sentences(path, strip_appendix=False):
-    """读入语料并分句。语料为「一行一摘要」，故先按行读、再逐行分句。
+    """读入语料并分句。语料为“一行一摘要”，故先按行读、再逐行分句。
 
     strip_appendix=True 时，在 `<!-- APPENDIX -->` 处截断（与 style_compare.py /
     anti_ai_check.py / count_markers.py 的 `--strip-appendix` 口径一致）。
@@ -90,6 +90,19 @@ def read_sentences(path, strip_appendix=False):
         raw = fh.read()
     if strip_appendix:
         raw = re.split(r"<!--\s*APPENDIX\s*-->", raw, maxsplit=1)[0]
+    # 与 style_compare.read_text() 口径对齐（[ERR-2026W41-92]）：
+    #   稿首 `>` 引用块警示行、Markdown 标题、表格行、行内代码若不清除，
+    #   会被当成独立"句子"计入句数 → 连接词密度被稀释（W41 D04 实测 13→16 句，46.2→37.5/百句）。
+    raw = re.sub(r"^>.*$", "", raw, flags=re.M)                    # 引用块
+    raw = re.sub(r"^#{1,6}\s.*$", "", raw, flags=re.M)              # Markdown 标题
+    raw = re.sub(r"^\s*\|.*\|\s*$", "", raw, flags=re.M)            # 表格行
+    # ⚠️ [ERR-2026W41-101] 无序列表项此前**未剔除**（`style_compare` 已于 `-86` 修，本脚本漏同步）：
+    #    稿首元信息 `- **章型**：…` 四条被当成独立"句子"计入句数
+    #    （W41 D06 实测：句数 18→22 虚高 22%，连接词密度 50.0→40.91 虚低 18.2%）。
+    raw = re.sub(r"^\s*[-*+]\s.*$", "", raw, flags=re.M)            # 无序列表项
+    raw = re.sub(r"^\s*-{3,}\s*$", "", raw, flags=re.M)             # 分隔线
+    raw = re.sub(r"[*_\[\]]", "", raw)                              # 强调/方括号标记
+    raw = re.sub(r"`[^`\n]*`", " ", raw)                            # 行内代码 span
     sents = []
     for line in raw.splitlines():
         line = line.strip()
@@ -112,7 +125,7 @@ def main():
     ap.add_argument("--corpus", required=True, help="每行一句的语料 txt")
     ap.add_argument("--json", default=None, help="可选：写出 json")
     ap.add_argument("--min-ratio", type=float, default=0.5,
-                    help="判定「低频合法词」的阈值（每百句），默认 0.5")
+                    help="判定“低频合法词”的阈值（每百句），默认 0.5")
     ap.add_argument("--strip-appendix", action="store_true",
                     help="在 <!-- APPENDIX --> 处截断（对交付类稿件必用；防止附录自述污染正文口径）")
     args = ap.parse_args()
@@ -125,7 +138,7 @@ def main():
     text_lower = "\n".join(sents).lower()
 
     # ---------- 口径 ①：官方口径（与 style_compare.py / extract_language.py 完全一致） ----------
-    #     必须复用同一 CONNECTIVES 表，否则跨轮指标不可比。导入失败时降级为「不可用」而不静默替换。
+    #     必须复用同一 CONNECTIVES 表，否则跨轮指标不可比。导入失败时降级为“不可用”而不静默替换。
     official = None
     official_words = []
     try:

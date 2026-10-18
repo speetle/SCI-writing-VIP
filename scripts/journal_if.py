@@ -7,7 +7,7 @@ journal_if.py — 期刊影响因子本地指标表构建 / 增量更新工具
   bioxbio.com  (https://www.bioxbio.com/journal/<SLUG>)
   SLUG 规则：PubMed 的 ISO 期刊缩写 → 全部大写、非字母数字替换为 "-"
       例: "Brief Bioinform" → BRIEF-BIOINFORM ; "Nucleic Acids Res" → NUCLEIC-ACIDS-RES
-  抓取策略：ISO 缩写 slug → 全称 slug，逐个尝试；**每个候选页都必须通过「页面归属校验」
+  抓取策略：ISO 缩写 slug → 全称 slug，逐个尝试；**每个候选页都必须通过“页面归属校验”
   （<title> 中的期刊名须与请求期刊一致）才允许写入**。
 
   ⚠️ 历史缺陷（2026-09-21 发现并修复）：旧版用
@@ -53,7 +53,7 @@ def http_get(url, timeout=25, retries=3, backoff=1.5):
     """带重试的 GET，失败抛异常。
 
     bioxbio 抖动明显（实测 SSL handshake timeout），单次失败不足以判定
-    「期刊不在库中」，须重试后再标 PENDING。
+    “期刊不在库中”，须重试后再标 PENDING。
     但 **HTTP 404 是确定性结果**（该 slug 不在库中），重试无意义、纯浪费时间，
     直接抛出交由上层尝试下一个候选 slug。
     """
@@ -131,7 +131,7 @@ def candidate_slugs(iso, full_name):
     3) 全称              "Frontiers in Immunology" → FRONTIERS-IN-IMMUNOLOGY
     4) 全称去括号
 
-    已删除旧版「站内搜索兜底」——该站搜索页服务端返回静态热门列表，
+    已删除旧版“站内搜索兜底”——该站搜索页服务端返回静态热门列表，
     取首条链接会把无关期刊的 IF 静默写入（红线：不编造数据）。
     """
     out = []

@@ -4,13 +4,13 @@
 extract_prose.py — 从 Markdown 训练稿/交付稿中抽取**正文散文**，供计数类脚本（count_markers /
 count_connectors / extract_language）使用。
 
-为什么需要它（对应 [ERR-2026W40-04]「机检脚本被非正文污染」家族的固定动作）：
-`anti_ai_check.py` 已内建「截断 `<!-- APPENDIX -->` + 剔除稿首引用块」的正文范围规则，
+为什么需要它（对应 [ERR-2026W40-04]“机检脚本被非正文污染”家族的固定动作）：
+`anti_ai_check.py` 已内建“截断 `<!-- APPENDIX -->` + 剔除稿首引用块”的正文范围规则，
 但 `count_markers.py` / `count_connectors.py` **只**提供 `--strip-appendix`，不剔标题行、引用块、
-表格、列表项、斜体元信息行。直接把这些脚本指向 `.md` 会把「起草前声明」「素材信息清单」
-「附录自述」等非正文内容计入分母（实测虚高可达 1.9 倍）。
+表格、列表项、斜体元信息行。直接把这些脚本指向 `.md` 会把“起草前声明”“素材信息清单”
+“附录自述”等非正文内容计入分母（实测虚高可达 1.9 倍）。
 
-本脚本把「非正文内容清单」固化为**唯一实现**，五个类别逐项对照：
+本脚本把“非正文内容清单”固化为**唯一实现**，五个类别逐项对照：
   ① 稿首标题行（`#` 开头）
   ② 引用块（`>` 开头）
   ③ `<!-- APPENDIX -->` 及其后全部内容
@@ -60,7 +60,7 @@ def extract(md_text: str) -> str:
     if not text:
         return ""
     # 统一分句（与 count_connectors.split_sentences 的粗口径一致，供快速核验）
-    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z(\[])", text)
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z(\[]|[a-z]{1,3}[A-Z0-9])", text)
     return "\n".join(p.strip() for p in parts if p.strip())
 
 

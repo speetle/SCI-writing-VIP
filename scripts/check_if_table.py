@@ -7,7 +7,7 @@ check_if_table.py — journal_metrics.csv 归属一致性校验（红线自检�
 旧版 journal_if.py 在 slug 抓取失败后会回退到站内搜索，而该站搜索页由前端 JS 渲染，
 服务端返回的是一份**静态热门期刊列表**（首条恒为 PLOS-ONE）。于是 341/632 行
 被写入 PLOS ONE 的 IF（2.8）与 URL，`status` 仍记 `OK`，污染了 290/520 篇入选文献的
-IF 分层，而 `if_source_url` 反而成了「错误已被追溯」的假证据。
+IF 分层，而 `if_source_url` 反而成了“错误已被追溯”的假证据。
 
 因此引入本校验：**IF 表的每一行，其 if_source_url 的 slug 必须等于
 journal_iso 的规范 slug**。URL 与期刊名不一致 ⇒ 该值不可溯源 ⇒ 视为污染。

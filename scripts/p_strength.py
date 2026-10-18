@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""P1–P4「问题表述强度」量化脚本（W40 D05 建，服务 daily-sop §5-0）
+"""P1–P4“问题表述强度”量化脚本（W40 D05 建，服务 daily-sop §5-0）
 
 口径四项声明
   · 词表范围：见下 ASSERTIVE / WEAKCAUSAL / SPECULATIVE 三张表（本脚本内硬编码）
+  · 词表版本：**v2（2026-10-12 W42 D01 修）**——修“三引号跨行致换行后首支路永不命中”与
+    “`V(?:s|ed)` 缺 `?` 致动词原形不匹配”双缺陷。**v2 的 `P2_assertive_per100` 系统性高于 v1**，
+    跨版本比较前须先确认词表版本（详见 D 库 `D-58`）。
   · 分句口径：按 [.!?] 切分 + 去空白；剔除 <6 词的残片
   · 过滤条件：仅取传入文本的正文；本脚本不读附录
   · 脚本名：p_strength.py（自建，非 skill 内既有脚本）
@@ -11,8 +14,8 @@
 P4 断言强度评分规则（0–3，自建指数，非文献定论）
 
   ⚠️ 与 daily-sop §5-0 表格文字的关系（须同时声明，防"口径随值走"）：
-     SOP 原文字面为「3=强因果+量化／2=直接因果／1=弱化因果／0=纯推测」。
-     本脚本把「3」由"强因果动词 + 量化"放宽为「**报告性/因果性动词 + 句内量化**」——
+     SOP 原文字面为“3=强因果+量化／2=直接因果／1=弱化因果／0=纯推测”。
+     本脚本把“3”由"强因果动词 + 量化"放宽为“**报告性/因果性动词 + 句内量化**”——
      理由：本语料（生物医学摘要 / Results）的量化断言绝大多数写成 `was associated with (OR…, 95% CI…, p…)`，
      若"3"必须同时满足"强因果动词"，则该档在本语料中将近乎不存在（实测 ≤1%），
      失去"真人是否敢把话说到位"的区分力。**该放宽已在本文件顶部声明，属显式口径变更，不属静默改判。**
@@ -29,16 +32,32 @@ import re
 import statistics
 import sys
 
-ASSERTIVE = r"""\b(drives?|driven|shapes?|shaped|determines?|determined|confers?|conferred|governs?|governed|
-establishes?|established|reveals?|revealed|demonstrates?|demonstrated|identif(?:y|ies|ied|ying)|
-confirms?|confirmed|shows?|showed|shown|abolish(?:es|ed)?|restrict(?:s|ed|ing)?|localiz(?:es|ed)|localis(?:es|ed)|
-produces?|produced|recapitulat(?:es|ed)|eliminat(?:es|ed)|causes?|caused|mediate[sd]?|mediating|
-define[sd]?|defining|require[sd]?|requiring|enables?|enabled|promotes?|promoted|suppress(?:es|ed)|
-increas(?:es|ed|ing)|decreas(?:es|ed|ing)|reduc(?:es|ed|ing)|impair(?:s|ed)|enhanc(?:es|ed)|block(?:s|ed)|inhibit(?:s|ed))\b"""
-WEAKCAUSAL = r"""\b(associat(?:es|ed)|correlat(?:es|ed)|link(?:s|ed)|relat(?:es|ed)|contribut(?:es|ed)|
-observed|found|detected|indicat(?:es|ed|ing)|suggest(?:s|ed)|trend(?:s|ed)|appeared)\b"""
-SPECULATIVE = r"""\b(may|might|could|possibly|potentially|apparently|perhaps|likely|unlikely|candidate|
-potential|presumably|seem(?:s|ed)?|appear(?:s|ed)?)\b"""
+# ⚠️ 2026-10-12 W42 D01 修复（三张表的**换行注入**与**原形缺失**双缺陷，详见 D 库 `D-58`）
+#   旧写法用三引号跨行排版，换行符被当作字面 `\n` 注入换行后的**首个支路** → 该支路永不命中：
+#     ASSERTIVE  : establishes? / confirms? / produces? / define[sd]? / increas(?:es|ed|ing)
+#     WEAKCAUSAL : observed
+#     SPECULATIVE: potential
+#   另有 `V(?:s|ed)` 型支路缺 `?` → **动词原形不匹配**（confirm / recapitulate / block / inhibit /
+#     suppress / impair / enhance / localize / eliminate / produce / increase / suggest / trend /
+#     relate / associate / contribute / link …）。
+#   后果：`P2_assertive_per100` 与 `断言:推测` **系统性偏低**（保守方向失真）→ 判据方向被反转。
+#   现改为单行拼接字面串并补全原形；**旧读数一律保留不删、并在沉淀中标注口径变更**（`D-25`）。
+ASSERTIVE = (
+    r"\b(drives?|driven|shapes?|shaped|determines?|determined|confers?|conferred|governs?|governed|"
+    r"establishes?|established|reveals?|revealed|demonstrates?|demonstrated|identif(?:y|ies|ied|ying)|"
+    r"confirms?|confirmed|shows?|showed|shown|abolish(?:es|ed)?|restrict(?:s|ed|ing)?|localiz(?:e|es|ed)|localis(?:e|es|ed)|"
+    r"produces?|produced|recapitulat(?:e|es|ed)|eliminat(?:e|es|ed)|causes?|caused|mediate[sd]?|mediating|"
+    r"define[sd]?|defining|require[sd]?|requiring|enables?|enabled|promotes?|promoted|suppress(?:es|ed)|"
+    r"increas(?:e|es|ed|ing)|decreas(?:e|es|ed|ing)|reduc(?:e|es|ed|ing)|impair(?:s|ed)|enhanc(?:e|es|ed)|block(?:s|ed)|inhibit(?:s|ed))\b"
+)
+WEAKCAUSAL = (
+    r"\b(associat(?:e|es|ed)|correlat(?:e|es|ed)|link(?:s|ed)?|relat(?:e|es|ed)|contribut(?:e|es|ed)|"
+    r"observed|found|detected|indicat(?:e|es|ed|ing)|suggest(?:s|ed)?|trend(?:s|ed)?|appeared)\b"
+)
+SPECULATIVE = (
+    r"\b(may|might|could|possibly|potentially|apparently|perhaps|likely|unlikely|candidate|"
+    r"potential|presumably|seem(?:s|ed)?|appear(?:s|ed)?)\b"
+)
 QUANT = r"(\d+(?:\.\d+)?\s?%|\bn\s?=\s?\d|\b\d+(?:\.\d+)?-fold|\bp\s?[<=]\s?[\d.]|95%\s?(?:CI|confidence interval)|\bOR\s?=|\bAUC\s?[=><]|\bβ\s?=|q\s?=\s?[\d.])"
 DISCLAIM_CHAIN = r"(does not|do not|did not|cannot|is not|are not|not constitute|should not be (?:interpreted|taken|considered)|rather than (?:a|an|an?\s+\w+\s+)?(?:causal|independent|direct))"
 
@@ -92,9 +111,25 @@ def report(name, sents):
 
 
 def main():
-    toppool = sys.argv[1]
-    mine = sys.argv[2]
-    out = sys.argv[3]
+    # 用法：p_strength.py <toppool.csv> <mine.md> <out.json> [--label "…"] [--extra <语料.txt>]
+    # [2026-10-07 W41 D03 修] 原第 3 条报告名硬编码为“我的初稿（Results 段·正文区）”，
+    #   在 I/D 章或基线语料上运行时标签错位（欠账于 W41 D01 登记、D02 第 2 日挂账）。
+    #   现改为：默认由文件名推断，可用 --label 显式覆盖；并新增 --extra 以同口径测任意语料。
+    argv = sys.argv[1:]
+    label = None
+    extra = None
+    pos = []
+    i = 0
+    while i < len(argv):
+        if argv[i] == "--label" and i + 1 < len(argv):
+            label = argv[i + 1]; i += 2; continue
+        if argv[i] == "--extra" and i + 1 < len(argv):
+            extra = argv[i + 1]; i += 2; continue
+        pos.append(argv[i]); i += 1
+    if len(pos) < 3:
+        print(__doc__)
+        sys.exit(2)
+    toppool, mine, out = pos[0], pos[1], pos[2]
 
     res = []
 
@@ -132,7 +167,20 @@ def main():
         if re.match(r"^[-*|]", s) or s.startswith("**") and s.endswith("**"):
             continue
         body.append(s)
-    res.append(report("我的初稿（Results 段·正文区）", sentences(" ".join(body))))
+    import os as _os
+    auto = _os.path.splitext(_os.path.basename(mine))[0]
+    res.append(report(label or ("我的初稿（%s·正文区，自动命名）" % auto), sentences(" ".join(body))))
+
+    # ---- 可选：另一份语料（同口径；用于章型基线 / 同章型对照）
+    if extra:
+        ex = []
+        with open(extra, encoding="utf-8") as f:
+            for line in f.read().splitlines():
+                s = line.strip()
+                if not s or s.startswith("#") or s.startswith(">"):
+                    continue
+                ex.append(s)
+        res.append(report(label and (label + "｜对照语料") or ("对照语料（%s）" % _os.path.basename(extra)), sentences(" ".join(ex))))
 
     with open(out, "w", encoding="utf-8") as f:
         json.dump(res, f, ensure_ascii=False, indent=2)

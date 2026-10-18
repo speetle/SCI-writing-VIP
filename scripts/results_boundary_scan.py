@@ -5,8 +5,8 @@ results_boundary_scan.py —— Results 段末边界句统计（周课 ⑨ 的 R
 
 背景
 ----
-W39 周课 ⑨ 从 **1 篇**深拆（PMID 42737438，14 段中 13 段）得出「Results 每小节末尾
-至少 1 句边界句」的四类模板，并在框架模板 §4 列为 `[待校验]`：
+W39 周课 ⑨ 从 **1 篇**深拆（PMID 42737438，14 段中 13 段）得出“Results 每小节末尾
+至少 1 句边界句”的四类模板，并在框架模板 §4 列为 `[待校验]`：
 **W40 须扩至 ≥20 篇全文统计；命中率 <50% 则降级为"个人风格"而非通用规则。**
 
 本脚本即用于关闭该待校验项。它复用 `imrad_scan.py` 的 PMC 缓存，
@@ -129,7 +129,7 @@ def parse_results_paragraphs(xml_path):
     """返回 [(results_unit_title, paragraph_text), ...]
 
     unit = Results 章的**最细小节**（有子章节用子章节标题，否则用章标题），
-    以便按「每个小节末尾」的口径检验边界句规则。
+    以便按“每个小节末尾”的口径检验边界句规则。
     """
     try:
         root = ET.fromstring(open(xml_path, "rb").read())

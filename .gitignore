@@ -45,3 +45,6 @@ Thumbs.db
 # 个人路径与身份信息的本地残留
 *.local
 *.bak
+*.bak-*
+*.orig
+*.rej

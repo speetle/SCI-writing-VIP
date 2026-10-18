@@ -46,7 +46,7 @@ Agent 的技能自动发现**只识别 frontmatter 白名单键**：
 | `metadata` | 可选 | 如 `emoji`、`requires.bins`、`requires.python` |
 | `agent_created` | ✅ | 必须为 `true`，否则后续无法用技能管理工具修改 |
 
-**常见致命错误**：把 `version` / `author` / `category` / `tags` 等键直接写在 frontmatter 顶层。这些键不在白名单内，会导致自动发现失败。正确做法是移到正文的「元数据归档」区块，或放进 `metadata` 下。
+**常见致命错误**：把 `version` / `author` / `category` / `tags` 等键直接写在 frontmatter 顶层。这些键不在白名单内，会导致自动发现失败。正确做法是移到正文的“元数据归档”区块，或放进 `metadata` 下。
 
 校验：
 
@@ -185,7 +185,7 @@ WorkBuddy 的推荐市场（BuiltinMarket）与 SkillHub 打通：
 2. 打开 WorkBuddy → 左侧【技能管理】/【专家 → 技能市场】
 3. 搜索技能名，一键安装
 
-用户也可以不走市场，直接在对话里说「安装 SCI-writing-VIP 技能」由技能安装器完成。
+用户也可以不走市场，直接在对话里说“安装 SCI-writing-VIP 技能”由技能安装器完成。
 
 > 若你是**企业版**用户，除个人 SkillHub 外还有企业专区通道，流程与个人发布不同（需企业管理员开通），请以企业控制台说明为准。
 

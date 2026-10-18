@@ -7,7 +7,7 @@ repair_ids.py —— 修复文献池中 doi / pmcid / oa 三列的错位问题
 --------------------
 harvest.py 早期版本用 `art.findall(".//ArticleIdList/ArticleId")` 抓 DOI/PMCID。
 该 XPath 会递归进入 `ReferenceList/Reference/ArticleIdList`，命中**参考文献自己的**
-DOI/PMCID，且循环赋值使「最后一个匹配胜出」。结果：doi / pmcid 列记的是别篇文献的
+DOI/PMCID，且循环赋值使“最后一个匹配胜出”。结果：doi / pmcid 列记的是别篇文献的
 标识，由 pmcid 派生的 oa 标记随之失真。
 
 影响面：doi、pmcid、oa 三列。**不影响** pmid / title / journal / abstract / IF / if_bin。
@@ -151,7 +151,7 @@ def main():
         "- **受影响列**：`doi`、`pmcid`、`oa`。",
         "- **未受影响**：`pmid`、`title`、`journal_iso`、`abstract`、`if_latest`、`if_bin`、",
         "  `mode`、`tags` —— 故基于这些列的报告统计（IF 分布、热点聚类、模式构成）不受影响。",
-        "- **需回改的表述**：一切引用「OA 篇数」「[OA]/[非OA] 标记」的结论，须按修复后数值重述。",
+        "- **需回改的表述**：一切引用“OA 篇数”“[OA]/[非OA] 标记”的结论，须按修复后数值重述。",
         "",
     ]
     out = "\n".join(msg)

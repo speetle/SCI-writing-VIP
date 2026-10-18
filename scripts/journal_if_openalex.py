@@ -113,7 +113,7 @@ def main():
     # ⚠️ 2026-09-28 W40 修复：原写法 `(r.get("issn") or "").strip().split()[0]`
     # 在 issn 为空字符串时抛 IndexError（`"".strip().split()` → `[]`），
     # 使整个脚本在**写完代理指标表之后、原地补齐文献池之前**崩溃，
-    # 表现为「表已生成、池未补齐」的半成品状态。改用与 L75/L132 一致的守卫写法。
+    # 表现为“表已生成、池未补齐”的半成品状态。改用与 L75/L132 一致的守卫写法。
     def _issn0(r):
         s = (r.get("issn") or "").strip()
         return s.split()[0] if s else ""

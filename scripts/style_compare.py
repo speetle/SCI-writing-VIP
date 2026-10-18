@@ -76,7 +76,11 @@ def read_text(p, strip_cit=False):
     t = re.sub(r"^#{1,6}\s.*$", "", t, flags=re.M)   # 标题
     t = re.sub(r"^\s*\|.*$", "", t, flags=re.M)      # 表格行
     t = re.sub(r"^\s*\d+[.)]\s.*$", "", t, flags=re.M)  # 有序列表项（起草前声明块 `1. 稿件类型：…`）
-    # ⚠️ [ERR-2026W40-55] 缺这一行时，稿首「起草前四项强制声明」会被当成 1 个 104 词的"句子"，
+    # ⚠️ [ERR-2026W41-86] 无序列表项此前**未剔除**：稿末“本轮自检 / 改动说明”的 `- ` 条目
+    #    会被拼进最后一句（实测把 28 词的收口句撑成 **76 词**，并使 词数/平均句长/长句占比 全部虚高）。
+    #    `extract_prose.py` 的 LIST_RE 已含此项 → 本次对齐；同理保留标题/表格/引用块剔除。
+    t = re.sub(r"^\s*[-*+]\s.*$", "", t, flags=re.M)  # 无序列表项
+    # ⚠️ [ERR-2026W40-55] 缺这一行时，稿首“起草前四项强制声明”会被当成 1 个 104 词的"句子"，
     #    使 style_compare 的 最长句 / 平均句长 / 句长 SD 全部虚高（本日实测 27.6 → 22.6、SD 21.2 → 9.4）。
     #    `extract_prose.py` 自 D04 起已内建该项（LIST_RE），此处对齐；`anti_ai_check.py` 同步修。
     t = re.sub(r"^\s*-{3,}\s*$", "", t, flags=re.M)  # 分隔线
@@ -87,7 +91,7 @@ def read_text(p, strip_cit=False):
 
 def split_sentences(text):
     text = re.sub(r"\s+", " ", text).strip()
-    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z(])", text)
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z(]|[a-z]{1,3}[A-Z0-9])", text)
     return [p.strip() for p in parts if len(p.split()) >= 5]
 
 
@@ -237,7 +241,7 @@ def main():
          "- 引文编号口径：**未施加**（样本 A 为摘要级语料时无须；全文语料请加 `--strip-citations`）"),
         "",
         "> 阈值仅为本系统自检口径，非文献定论。样本 A 是摘要级语料时，其句长天然短于全文正文，",
-        "> 因此「句长类」指标的同口径比较优先级低于「连接词密度 / hedge-booster 比 / 模板短语」类指标。",
+        "> 因此“句长类”指标的同口径比较优先级低于“连接词密度 / hedge-booster 比 / 模板短语”类指标。",
         "",
         "| 指标 | 样本A 真人 | 样本B 我的 | 差值 | 判定 | 说明 |",
         "|---|---|---|---|---|---|",
