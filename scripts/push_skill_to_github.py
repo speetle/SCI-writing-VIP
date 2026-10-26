@@ -197,8 +197,8 @@ def main():
     protected_stale = [p for p in stale if protected(p)]
     stale = [p for p in stale if not protected(p)]
 
-    print(f"\n[比对] 新增 {len(to_add) - len(changed)}｜修改 {len(changed)}｜"
-          f"远端有本地无（删除）{len(stale)}｜无变化 {len(local) - len(to_add)}")
+    print(f"\n[比对] 新增 {len(to_add) - len(changed)}／修改 {len(changed)}／"
+          f"远端有本地无（删除）{len(stale)}／无变化 {len(local) - len(to_add)}")
     for p in sorted(changed)[:20]:
         print(f"      M {p}")
     for p in sorted(p for p in to_add if p not in changed)[:20]:
@@ -229,7 +229,7 @@ def main():
         if not a.tag:
             sys.exit("🔴 --tag-only 须同时给出 --tag <名称>。")
         _make_tag(a.repo, a.tag, head_sha, token)
-        print(f"\n✅ 仅标签操作完成（未新建 commit）｜main HEAD 仍为 {head_sha[:10]}")
+        print(f"\n✅ 仅标签操作完成（未新建 commit）／main HEAD 仍为 {head_sha[:10]}")
         return
 
     add_sha = {}
@@ -263,7 +263,7 @@ def main():
     vt = api(f"/repos/{a.repo}/git/trees/{commit['sha']}?recursive=1")
     rt = {i["path"]: i["sha"] for i in vt.get("tree", []) if i.get("type") == "blob"}
     bad = [p for p, d in local.items() if rt.get(p) != blob_sha(d)]
-    print(f"\n✅ 推送完成 {commit['sha'][:10]}｜远端文件 {len(rt)}｜内容不符 {len(bad)}")
+    print(f"\n✅ 推送完成 {commit['sha'][:10]}／远端文件 {len(rt)}／内容不符 {len(bad)}")
     if bad:
         for p in bad[:10]:
             print("   ❌", p)

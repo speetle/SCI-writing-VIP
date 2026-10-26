@@ -51,9 +51,9 @@ def render_md(week, day, rows):
         f"# {week} D{day:02d} 当日阅读清单",
         "",
         f"- 篇数：**{len(rows)}**",
-        f"- IF 区间分布：{'｜'.join(f'{k} {v}' for k, v in sorted(c_bin.items(), key=lambda x: IF_ORDER.get(x[0], 9)))}",
-        f"- 研究模式：{'｜'.join(f'{k} {v}' for k, v in c_mode.most_common())}",
-        f"- 开放获取：{'｜'.join(f'{k} {v}' for k, v in c_oa.most_common())}",
+        f"- IF 区间分布：{' | '.join(f'{k} {v}' for k, v in sorted(c_bin.items(), key=lambda x: IF_ORDER.get(x[0], 9)))}",
+        f"- 研究模式：{' | '.join(f'{k} {v}' for k, v in c_mode.most_common())}",
+        f"- 开放获取：{' | '.join(f'{k} {v}' for k, v in c_oa.most_common())}",
         "",
         "> 本清单由 `scripts/daily_pick.py` 确定性生成：排序键 = IF 区间 → score → PMID，轮转分配。",
         "> 所有条目均来自真实 PubMed 检索结果（检索式见 `search_log.md`）。",
@@ -111,8 +111,8 @@ def main():
     dup = len(all_pmids) - len(set(all_pmids))
     c_bin = Counter((r.get("if_bin") or "?").strip() for r in mine)
     print(f"[daily_pick] {a.week} D{a.day:02d}: {len(mine)} 篇 → {a.out_dir}")
-    print(f"  IF 区间: {'｜'.join(f'{k} {v}' for k, v in sorted(c_bin.items(), key=lambda x: IF_ORDER.get(x[0], 9)))}")
-    print(f"  全周并集 {len(all_pmids)} 篇｜重复 {dup} 篇｜池总数 {len(rows)} 篇")
+    print(f"  IF 区间: {' | '.join(f'{k} {v}' for k, v in sorted(c_bin.items(), key=lambda x: IF_ORDER.get(x[0], 9)))}")
+    print(f"  全周并集 {len(all_pmids)} 篇 | 重复 {dup} 篇 | 池总数 {len(rows)} 篇")
     if dup:
         print("  ⚠️ 存在重复分配，请检查池文件是否有重复 PMID")
     if len(mine) < a.per_day:

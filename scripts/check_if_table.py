@@ -58,8 +58,8 @@ def main():
 
     rows, ok, bad, plos, pend = check(a.table)
     print(f"表：{a.table}")
-    print(f"总行数 {len(rows)}｜URL 与期刊一致 {ok}｜PENDING {pend}｜"
-          f"疑似 PLOS 兜底污染 {len(plos)}｜其他 slug 不符 {len(bad)}")
+    print(f"总行数 {len(rows)}／URL 与期刊一致 {ok}／PENDING {pend}／"
+          f"疑似 PLOS 兜底污染 {len(plos)}／其他 slug 不符 {len(bad)}")
     if plos:
         print(f"\n[红线] PLOS 兜底污染（示例 {min(a.show, len(plos))} 条）：")
         for iso, v, u in plos[:a.show]:

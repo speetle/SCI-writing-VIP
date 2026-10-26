@@ -140,8 +140,8 @@ def dump_markdown(root, meta):
     L = []
     L.append(f"# {meta.get('title') or '(无标题)'}")
     L.append("")
-    L.append(f"> **depth**: `full`｜**PMID**: {meta.get('pmid','—')}｜**PMCID**: {meta.get('pmcid','—')}"
-             f"｜**期刊**: {meta.get('journal','—')}｜**DOI**: {meta.get('doi','—')}")
+    L.append(f"> **depth**: `full`／**PMID**: {meta.get('pmid','—')}／**PMCID**: {meta.get('pmcid','—')}"
+             f"／**期刊**: {meta.get('journal','—')}／**DOI**: {meta.get('doi','—')}")
     L.append("> 文本已规范化（U+00A0 → 空格）。所有内容为原文搬运，未作改写。")
     L.append("")
     L.append(f"**摘要**：{meta.get('abstract','(未取到)')}")

@@ -149,8 +149,8 @@ def main():
     print("=" * 66)
     print(f"[count_markers] 语料 {a.corpus}")
     print(f"  口径四项：① 词表=INITIAL_MARKERS({len(INITIAL_MARKERS)} 项)/CONCESSIVE(5 项)/--literal "
-          f"｜② 分句=count_connectors.split_sentences() ｜③ 过滤={'剔除 APPENDIX' if a.strip_appendix else '无'} "
-          f"｜④ 脚本=count_markers.py")
+          f"／② 分句=count_connectors.split_sentences() ／③ 过滤={'剔除 APPENDIX' if a.strip_appendix else '无'} "
+          f"／④ 脚本=count_markers.py")
     print(f"  句数 {r['sentences']}")
     print("-" * 66)
     print(f"  【A】句首标记词句占比（**双口径，严禁混称**）")
@@ -162,7 +162,7 @@ def main():
     for e in r["initial_examples"]:
         print(f"         · {e}")
     print(f"  【B】让步/对比结构 合计 {r['concessive_total']} = {r['concessive_per_100sent']:.2f} / 百句")
-    print("       " + "｜".join(f"{k} {v}" for k, v in r["concessive"].items()))
+    print("       " + "／".join(f"{k} {v}" for k, v in r["concessive"].items()))
     if a.literal:
         print(f"  【C】字面串计数（口径：字面出现次数，非词元）：")
         for k in a.literal.split("|"):

@@ -401,7 +401,7 @@ def main():
         json.dump(meta, f, ensure_ascii=False, indent=2)
 
     print(f"\n✅ 顶刊 reserve 池已建：{out_csv}")
-    print(f"   篇数 {len(kept)}｜可全文(PMCID) {meta['with_pmcid']}/{len(kept)}")
+    print(f"   篇数 {len(kept)}／可全文(PMCID) {meta['with_pmcid']}/{len(kept)}")
     print(f"   年份分布：{meta['year_distribution']}")
     print(f"   期刊分布 Top10：{list(meta['journal_distribution'].items())[:10]}")
     print(f"   剔除原因：{meta['dropped']}")

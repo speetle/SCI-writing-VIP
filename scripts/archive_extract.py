@@ -238,7 +238,7 @@ def main():
                 n_c_fb += 1
 
         L += [
-            f"### {i}. PMID {pmid} — {(r.get('journal_iso') or '').strip()}（IF {r.get('if_latest','?')}｜{r.get('if_bin','')}｜{r.get('mode','')}｜{r.get('oa','')}）",
+            f"### {i}. PMID {pmid} — {(r.get('journal_iso') or '').strip()}（IF {r.get('if_latest','?')} | {r.get('if_bin','')} | {r.get('mode','')} | {r.get('oa','')}）",
             f"**Title**: {r.get('title','').strip()}",
             "",
             f"- **科学问题**：{(' '.join(q)) if q else '（摘要未述 / 未命中线索）'}{q_src}",
@@ -277,7 +277,7 @@ def main():
         "> 统计口径提示：设计类型的命中基于摘要中出现的**方法学术语**，属下限估计；",
         "> 未写进摘要的方法（如实际做了 WB、IHC 但摘要未提）不会被计入。",
         "",
-        f"_生成时间：{a.week} D{a.day:02d}｜脚本：archive_extract.py_",
+        f"_生成时间：{a.week} D{a.day:02d} | 脚本：archive_extract.py_",
     ]
 
     with open(a.out, "w", encoding="utf-8") as f:

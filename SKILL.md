@@ -111,12 +111,13 @@ agent_created: true
 
 ---
 
-## 3. 日课七阶段
+## 3. 日课七阶段 + 并列架构写法模块
 
-**完整 SOP 见 `references/daily-sop.md`**。要点：
+**完整 SOP 见 `references/daily-sop.md`**。日课原七阶段不删；新增 ①-c “论文架构与各部分写法拆解”，与 ①-b 并列、每日执行。
 
 | 阶段 | 产出文件（`01_文献库/<周次>/D0n/`、`05_仿写训练/<周次>/D0n/`） | 关键约束 |
 |---|---|---|
+| **①-c 架构与写法拆解** | `架构写法拆解_<周次>_D0n.md` | **与①-b并列、每日强制**。全篇架构卡 ≥74 篇；≥3 篇逐部分写法卡，覆盖 Abstract / Introduction / Methods / Results / Discussion / Conclusion / Figure legend / Table；≥1 段样本 A/B 对照（连接词、句长比例、信息密度、啰嗦废话、结论强度、图文关系）；全文级才拆图表布局。见 `references/architecture-writing-system.md` |
 | ① 归档 | `归档笔记.md` | 每篇记 科学问题 / 设计类型 / 核心结论 / 局限性；**未命中线索写"摘要未述"，不推断** |
 | **①-b 框架拆解** | `框架拆解_<周次>_D0n.md` ＋ 汇入 `04_IMRAD架构库/A_框架拆解累积.md` | **v2.8 起 9 字段**：研究框架 F1–F7 ＋ **F8 叙事逻辑（N1–N4 排法）** ＋ **F9 论证闭环（缺口→设计→结果→讨论回指）**；≥74 张快速卡 ＋ ≥3 张展开卡（含“叙事替选”）。三问：**作者如何构思 / 如何自洽 / 用什么方法讲清了什么问题**，每答须给位置。禁流水账。见 `references/framework-dissection-protocol.md` |
 | ② 语言范式 | `语言范式原料.md` → 汇入 `03_语言范式库/A~D` | **不提取 = 没读过**；每条须含原文引句 + PMID |
@@ -138,7 +139,7 @@ agent_created: true
 | # | 能力 | 触发 | 要做什么 | 协议文件 | 产出 |
 |---|---|---|---|---|---|
 | **C1** | **论文框架拆解** | 每日读文献时自动执行 | 逐篇拆 **研究框架（F1–F7）/ 叙事逻辑（F8：N1–N4 排法）/ 论证闭环（F9：缺口→设计→结果→讨论四段）**：作者如何构思、如何让逻辑自洽、用什么方法讲清了什么问题 | `references/framework-dissection-protocol.md` | 74 张快速卡 + ≥3 张展开卡 + 原型分布 |
-| **C2** | **分部结构与写法拆解** | 写稿、改稿、拆解他人文章时 | 按 **摘要 / 引言 / 结果 / 讨论 / 图注 / cover letter** 逐部位拆结构与套路；**引言以漏斗四步法为范本**（①大背景收口 ②聚焦前沿 ③找 gap ④抛出本研究）；归纳可复用写法 | `references/section-playbooks.md` | 各部位槽位模板 + 自检清单；结论汇入 `04_IMRAD架构库/通用写作框架模板.md` |
+| **C2** | **分部结构与写法拆解** | 写稿、改稿、拆解他人文章时 | 按 **摘要 / 引言 / 方法 / 结果 / 讨论 / 结论 / figure legend / table / cover letter** 逐部位拆结构、行文逻辑、写作套路与图表布局；**引言以漏斗四步法为范本**（①大背景收口 ②聚焦前沿 ③找 gap ④抛出本研究）；与每日操练按连接词、句长比例、信息密度、啰嗦废话、结论强度、图文关系逐项 A/B 对照；归纳可复用写法与真人写 SCI 方法 | `references/section-playbooks.md` + `references/architecture-writing-system.md` | 各部位槽位模板 + 结构卡 + A/B 对照表 + 自检清单；结论汇入 `04_IMRAD架构库/通用写作框架模板.md` |
 | **C3** | **顶刊级叙事与论证标准** | 选题评估、大纲、Discussion 重写、投稿前 | 三把尺子（**现实痛点 / 理论进展 / 关键机制**）打分 + **故事质量四问（透彻 / 可信 / 有启发性 / 为什么值得解决）**判决；多篇对比扫描定“已解决 / 空白 / 矛盾”；**Gap Ledger** 保证引言→方法→结果→讨论闭环；**Figure Ledger** 逐图六问（支撑哪句 / 为何此图型 / 为何在此位置 / 证明什么 / 不能证明什么 / 与前后图关系） | `references/narrative-argument-standard.md` | 6 分制评分 + 两张 Ledger 表 + 自审打分（<6.5/8 不得投稿） |
 | **C4** | **AI 痕迹三步处理** | 每次修订、每份真实稿件 | ①排查“太像标准答案”的段落：删漂亮话后剩 ≤2 句有效信息 → 按 **具体结果＋依据＋个人判断** 重写；②列核心变量/方法/指标，**从头到尾叫法一致**，纠正同义替换导致的研究对象偏移；③排查幻觉：**逐条读原文**核文献真实存在且确实支撑，并校准结论放大或过保守 | `references/ai-trace-remediation.md` | `AI痕迹三步报告.md`（重写段落 / 术语表 / 引用核验表 / 强度校准） |
 
@@ -371,7 +372,8 @@ python3 <skill>/scripts/harvest_toppool.py \
 
 - `references/daily-sop.md` — **日课七阶段逐条 SOP（可直接照做）**
 - `references/framework-dissection-protocol.md` — **C1 论文框架拆解**：三问 + **9 字段快速卡（框架 7 ＋ 叙事 F8 ＋ 闭环 F9）** + 展开卡 + 八种论证原型
-- `references/section-playbooks.md` — **C2 分部写法**：摘要 / 引言漏斗四步 / 结果 / 讨论 / 图注 / cover letter 的槽位模板与自检 ＋ **§8 真人写 SCI 的十条方法与思路**
+- `references/section-playbooks.md` — **C2 分部写法**：摘要 / 引言漏斗四步 / 方法 / 结果 / 讨论 / 结论 / figure legend / table / cover letter 的槽位模板与自检 ＋ **§8 真人写 SCI 的十条方法与思路**
+- `references/architecture-writing-system.md` — **论文架构拆解与各部分写法并列模块**：整篇闭环、八类结构、图表布局、A/B 对照、AI 与真人特征、每日新增步骤与完成判据
 - `references/narrative-argument-standard.md` — **C3 顶刊叙事与论证**：三把尺子打分、**故事质量四问（透彻/可信/启发性/值得解决）**、多篇对比扫描、Gap Ledger、Figure Ledger
 - `references/ai-trace-remediation.md` — **C4 AI 痕迹三步**：标准答案段重写 / 术语一致性 / 引用与结论幻觉
 - `references/language-extraction-protocol.md` — 语言范式四类拆分口径 + 样本 A/B 对照方法
@@ -382,7 +384,7 @@ python3 <skill>/scripts/harvest_toppool.py \
 - `references/reading-depth.md` — 三级阅读深度与结论强度对照
 - `references/anti-ai-checklist.md` — AI 味负面清单与机检流程（**C4 三步法的负面清单来源**）
 - `references/writing-craft-taxonomy.md` — 技法分类体系
-- `references/templates/` — 归档、诊断报告、**前沿快报（v2.8 五章精简版）**、IMRAD、复盘、框架拆解（9 字段）模板
+- `references/templates/` — 归档、诊断报告、**架构写法拆解（并列日课）**、快报（v2.8 五章精简版）、IMRAD、复盘、框架拆解（9 字段）模板
 
 ## 11. 进化机制（不可省）
 

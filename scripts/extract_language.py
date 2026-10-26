@@ -118,8 +118,8 @@ CONNECTIVES = [
 # HEDGES = v1.0“核心口径”（**保持原值不变，历史数值可复现**）
 # ⚠️ v2.0（2026-09-26，W39 D06）留痕：v1.0 词表**漏收大量情态/认知限定词**，实测低估约 42%。
 #   证据（D06 语料 795 句）：v1.0 命中 165 = 20.8/百句；漏收候选（>0 者）合计 70 = 8.81/百句；
-#   两者合并 235 = 29.6/百句。漏收高频项：can 11｜limited 11｜should 7｜unclear 7｜exploratory 7｜
-#   often 4｜cannot 3｜estimates 3｜estimated 3｜no significant 3｜did not 2｜preliminary 2。
+#   两者合并 235 = 29.6/百句。漏收高频项：can 11 | limited 11 | should 7 | unclear 7 | exploratory 7 | 
+#   often 4 | cannot 3 | estimates 3 | estimated 3 | no significant 3 | did not 2 | preliminary 2。
 #   → 直接后果：D03/D04 的“hedge 密度 5.3 / 6.2 未入区间”判据建立在**低估**过的分母上；
 #     D05 声称的“rev2 实有 4 处情态、脚本只计 1 处”得到证实。
 #   处置：① 保留 v1.0（`HEDGES`）不动，供历史复现；② 新增 v2.0（`HEDGES_V2`）为**新判据口径**；
@@ -310,8 +310,8 @@ def main():
         L += [f"### {role}（命中 {len(items)} 句，展示前 {min(len(items), a.per_role)} 句）", ""]
         for s, r in items[: a.per_role]:
             L.append(
-                f"- *{s}*  \n  `PMID {r.get('pmid','')}` ｜ {(r.get('journal_iso') or '').strip()} "
-                f"｜ IF {r.get('if_latest','?')} ({r.get('if_bin','')}｜{_if_tag(r)}) ｜ {r.get('mode','')}"
+                f"- *{s}*  \n  `PMID {r.get('pmid','')}`  |  {(r.get('journal_iso') or '').strip()} "
+                f" |  IF {r.get('if_latest','?')} ({r.get('if_bin','')} | {_if_tag(r)})  |  {r.get('mode','')}"
             )
         if not items:
             L.append("- （当日语料未命中该角色线索，可扩大语料或补线索词）")

@@ -81,7 +81,7 @@ def main() -> int:
         n_word = len(prose.split())
         sys.stderr.write(
             f"[extract_prose] {a.md} → {a.out}\n"
-            f"  正文句数 {n_sent}｜词数（空白切分）{n_word}\n"
+            f"  正文句数 {n_sent} | 词数（空白切分）{n_word}\n"
             f"  口径：截断 <!-- APPENDIX -->；剔标题行/引用块/表格/列表/斜体元信息行\n"
         )
     else:

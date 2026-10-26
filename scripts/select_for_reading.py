@@ -98,7 +98,7 @@ def main():
         lines.append(f"\n---\n### {i}. [PMID:{r['pmid']}] [{r['oa']}] IF={r.get('if_latest') or '?'} "
                      f"({r.get('if_bin')}) | {r['mode']}\n"
                      f"**{r['title']}**\n\n*{r['journal_full'] or r['journal_iso']}* · {r.get('pubdate','')}\n\n"
-                     f"标签：{r['tags']}｜疾病：{r['cancers'] or '—'}｜匹配块：{r['matched_blocks']}\n\n"
+                     f"标签：{r['tags']} | 疾病：{r['cancers'] or '—'} | 匹配块：{r['matched_blocks']}\n\n"
                      f"{ab}\n")
     text = "\n".join(lines)
     if a.out:

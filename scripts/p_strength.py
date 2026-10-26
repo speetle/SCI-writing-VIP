@@ -180,7 +180,7 @@ def main():
                 if not s or s.startswith("#") or s.startswith(">"):
                     continue
                 ex.append(s)
-        res.append(report(label and (label + "｜对照语料") or ("对照语料（%s）" % _os.path.basename(extra)), sentences(" ".join(ex))))
+        res.append(report(label and (label + "／对照语料") or ("对照语料（%s）" % _os.path.basename(extra)), sentences(" ".join(ex))))
 
     with open(out, "w", encoding="utf-8") as f:
         json.dump(res, f, ensure_ascii=False, indent=2)
