@@ -142,21 +142,31 @@ python3 <skill>/scripts/ref_verify.py --manuscript <稿>.md --out <引用核验>
 
 ### H3 强度校准（双向）
 
-| 证据形态 | 允许的最强表述 | 禁止 |
+按 `references/evidence-calibration-protocol.md`（C5）逐主张审查：先定主张类型与 E0–E4，再校准结论强度；既查放大，也查过度保守。下表是最低检查项，不能用词频替代原文与设计判断。
+
+| 证据形态/主张类型 | 允许的最强表述 | 禁止 |
 |---|---|---|
 | 观察性关联 | `was associated with` / `co-varied with` | `caused` / `drives` / `leads to` |
 | 体外单一细胞系 | `in <cell line>` 限定后可用 `reduced` | 无限定的普适表述 |
 | 单一动物模型 | `in <model>` + 边界句 | `in humans` 暗示 |
 | 敲低/回补 | `is required for` / `sustains` | `is sufficient for`（未做过表达） |
 | 数据强但样本小 | 给效应量与 CI，照写方向 | 用 `may` / `potentially` 连环弱化 |
+| 预测 | 锁定模型、适当验证，并报告区分度与校准；仅内部验证时写 `showed internal discrimination` | 未外部验证即写 `predicts clinical outcomes` 或临床可用 |
+| 临床疗效 | 目标人群中的适当对照、预设终点、效应量与随访支持时，写 `improved the prespecified endpoint` | 单臂或开放延伸期数据写成比较疗效 |
+| 安全性 | 明确不良事件口径、样本量与随访；写 `No related grade ≥3 events were observed during <window>` | 笼统写 `safe` 或由短期观察推断长期安全 |
+| 趋势 | 同口径多个时间点且满足本系统 ≥4 周同向规则时，才可写趋势 | 单周计数写成 `increasing/emerging trend` |
+| 首创或证据空白 | 给出可复现的检索范围与日期；写 `not identified in the sources searched through <date>` | 把未检出写成绝对 `no studies exist` 或反向结论 |
 
-**过度保守同样是缺陷**：`may potentially suggest that X could perhaps be associated with Y` 会让审稿人质疑作者不信任自己的数据。一个 hedge 足够。
+每条承重结论还须分别锁定**对象、比较、终点、时间与条件**；四锁与确定性分开审。`may` 等弱化词不能修复范围越界。
+
+**过度保守同样是缺陷**：实测事实直接报告，推断紧邻依据并标清身份，猜测给出可测后果或反证条件。**不得以 hedge 数量、booster 数量或一条真人单句代替证据审查**；真人写法仍需核对其研究设计，C5 的证据裁决优先于文体观察。
 
 ### 通过判据
 - [ ] 每条引用都有 PMID/DOI，且 `ref_verify.py` 显示存在
 - [ ] 每条引用都读过原文（至少摘要），核验表判定列无空白
 - [ ] 不支持 / 反向支持项 0 条（或已改为对比句）
-- [ ] H3 校准：无“相关写因果”、无“体外写体内”、无连续双 hedge
+- [ ] H3 校准：无“相关写因果”、无“体外写体内”；预测、临床疗效、安全性、趋势与证据空白均按 C5 核查，四把范围锁无越界
+- [ ] 实测事实无多余 hedge，推断有紧邻依据，猜测有明确身份与可测出口；未以 hedge 数量或真人单句代替证据审查
 
 ---
 
